@@ -88,7 +88,7 @@
 
 
 
-#define TIMER_CLK_HZ         100000000
+#define TIMER_CLK_HZ         50000000
 
 #define SAMPLES_PER_CYCLE    128              // 改为128�?
 
