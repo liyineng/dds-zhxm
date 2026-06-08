@@ -108,33 +108,22 @@
 
 
 
-#define CMD_SET_WAVE    0x01
+// Fixed 6-byte frame: FF [FUNC+CH] [D0] [D1] [D2] [D3]
+// CMD byte: bits[7:4]=function  bit[3]=channel
 
-#define CMD_SET_FREQ    0x02
+#define FRAME_SYNC      0xFF
 
-#define CMD_SET_AMP     0x03
+#define FCMD_WAVE       0x0
 
-#define CMD_SET_MODE    0x04
+#define FCMD_FREQ       0x1
 
-#define CMD_SET_ARB     0x05
+#define FCMD_AMP        0x2
 
-#define CMD_SET_FREQ_IDX  0x06
+#define FCMD_MODE       0x3
 
+#define FCMD_FREQ_IDX   0x4
 
-
-#define UART_SYNC        0xA5
-
-
-
-#define UART_ST_IDLE       0
-
-#define UART_ST_WAIT_LEN   1
-
-#define UART_ST_WAIT_CMD   2
-
-#define UART_ST_WAIT_DATA  3
-
-#define UART_ST_WAIT_CHK   4
+#define FCMD_ARB        0x5
 
 
 
@@ -271,19 +260,11 @@ volatile u8 sync_mode = 0;
 
 
 
-volatile u8 uart_state = UART_ST_IDLE;
+volatile u8 uart_frame[5];
 
-volatile u8 uart_len = 0;
+volatile u8 uart_idx;
 
-volatile u8 uart_cmd = 0;
-
-volatile u8 uart_data_idx = 0;
-
-volatile u8 uart_data_buf[256];
-
-volatile u8 uart_chksum = 0;
-
-volatile u8 uart_calc_chk = 0;
+volatile u8 uart_got_sync;
 
 
 
@@ -313,7 +294,7 @@ void dac_write_fast(u16 cmd, u8 value);
 
 void uart_send_byte(u8 data);
 
-void uart_apply_command(void);
+void process_fixed_frame(u8 cmd_ch, u8* data);
 
 void gpio_init(void);
 
@@ -433,73 +414,53 @@ void uart_send_byte(u8 data)
 
 
 
-void uart_apply_command(void)
+void process_fixed_frame(u8 cmd_ch, u8* data)
 
 {
 
-    u32 new_freq;
+    u8 func = (cmd_ch >> 4) & 0x0F;
+
+    u8 ch = (cmd_ch >> 3) & 0x01;
+
+    u32 freq;
 
     u8 i;
 
-    switch(uart_cmd)
+    switch(func)
 
     {
 
-        case CMD_SET_WAVE:
+        case FCMD_WAVE:
 
-            if(uart_data_buf[1] == 0) {
+            if(ch == 0) { wave_type_a = data[0]; table_index_a = 0; }
 
-                wave_type_a = uart_data_buf[0];
-
-                table_index_a = 0;
-
-            } else if(uart_data_buf[1] == 1) {
-
-                wave_type_b = uart_data_buf[0];
-
-                table_index_b = 0;
-
-            }
+            else { wave_type_b = data[0]; table_index_b = 0; }
 
             break;
 
-        case CMD_SET_FREQ:
+        case FCMD_FREQ:
 
-            new_freq = ((u32)uart_data_buf[0])
+            freq = ((u32)data[0]) | ((u32)data[1] << 8)
 
-                     | ((u32)uart_data_buf[1] << 8)
+                 | ((u32)data[2] << 16) | ((u32)data[3] << 24);
 
-                     | ((u32)uart_data_buf[2] << 16)
+            if(ch == 0) { freq_hz_a = freq; update_hardware_timer(freq_hz_a); }
 
-                     | ((u32)uart_data_buf[3] << 24);
-
-            if(uart_data_buf[4] == 0) {
-
-                freq_hz_a = new_freq;
-
-                update_hardware_timer(freq_hz_a);
-
-            } else if(uart_data_buf[4] == 1) {
-
-                freq_hz_b = new_freq;
-
-                if(!sync_mode) update_hardware_timer(freq_hz_b);
-
-            }
+            else { freq_hz_b = freq; if(!sync_mode) update_hardware_timer(freq_hz_b); }
 
             break;
 
-        case CMD_SET_AMP:
+        case FCMD_AMP:
 
-            if(uart_data_buf[1] == 0) amplitude_a = uart_data_buf[0];
+            if(ch == 0) amplitude_a = data[0];
 
-            else if(uart_data_buf[1] == 1) amplitude_b = uart_data_buf[0];
+            else amplitude_b = data[0];
 
             break;
 
-        case CMD_SET_MODE:
+        case FCMD_MODE:
 
-            sync_mode = uart_data_buf[0];
+            sync_mode = data[0];
 
             if(sync_mode) {
 
@@ -517,31 +478,15 @@ void uart_apply_command(void)
 
             break;
 
-        case CMD_SET_ARB:
+        case FCMD_FREQ_IDX:
 
-            for(i = 0; i < 128; i++) arbitrary_table[i] = uart_data_buf[i];
+            if(data[0] > 13) break;
 
-            break;
+            freq = freq_table[data[0]];
 
-        case CMD_SET_FREQ_IDX:
+            if(ch == 0) { freq_hz_a = freq; update_hardware_timer(freq_hz_a); }
 
-            if(uart_data_buf[0] > 13) break;
-
-            new_freq = freq_table[uart_data_buf[0]];
-
-            if(uart_data_buf[1] == 0) {
-
-                freq_hz_a = new_freq;
-
-                update_hardware_timer(freq_hz_a);
-
-            } else if(uart_data_buf[1] == 1) {
-
-                freq_hz_b = new_freq;
-
-                if(!sync_mode) update_hardware_timer(freq_hz_b);
-
-            }
+            else { freq_hz_b = freq; if(!sync_mode) update_hardware_timer(freq_hz_b); }
 
             break;
 
@@ -553,7 +498,9 @@ void uart_apply_command(void)
 
 
 
-// UART 快速中断服务程序（极简：只收字节，不解码）
+
+
+// UART interrupt - collect 5 bytes after FF sync
 
 void UART_Handler(void)
 
@@ -569,109 +516,39 @@ void UART_Handler(void)
 
         if(status & ((1<<5) | (1<<6))) {
 
-            uart_state = UART_ST_IDLE;
+            uart_got_sync = 0;
+
+            uart_idx = 0;
 
             continue;
 
         }
 
-        switch(uart_state)
+        if(!uart_got_sync) {
 
-        {
+            if(rx_byte == FRAME_SYNC) {
 
-            case UART_ST_IDLE:
+                uart_got_sync = 1;
 
-                if(rx_byte == UART_SYNC) {
+                uart_idx = 0;
 
-                    uart_state = UART_ST_WAIT_LEN;
+            }
 
-                    uart_calc_chk = UART_SYNC;
+        } else {
 
-                    uart_data_idx = 0;
+            uart_frame[uart_idx] = rx_byte;
 
-                    uart_len = 0;
+            uart_idx++;
 
-                }
+            if(uart_idx >= 5) {
 
-                break;
+                process_fixed_frame(uart_frame[0], &uart_frame[1]);
 
-            case UART_ST_WAIT_LEN:
+                uart_got_sync = 0;
 
-                if(rx_byte == 0) {
+                uart_idx = 0;
 
-                    uart_state = UART_ST_IDLE;
-
-                    break;
-
-                }
-
-                uart_len = rx_byte;
-
-                uart_calc_chk ^= rx_byte;
-
-                uart_state = UART_ST_WAIT_CMD;
-
-                break;
-
-            case UART_ST_WAIT_CMD:
-
-                uart_cmd = rx_byte;
-
-                uart_calc_chk ^= rx_byte;
-
-                uart_len--;
-
-                if(uart_len > 0) {
-
-                    uart_data_idx = 0;
-
-                    uart_state = UART_ST_WAIT_DATA;
-
-                } else {
-
-                    uart_state = UART_ST_WAIT_CHK;
-
-                }
-
-                break;
-
-            case UART_ST_WAIT_DATA:
-
-                if(uart_data_idx >= 200) {
-
-                    uart_state = UART_ST_IDLE;
-
-                    break;
-
-                }
-
-                uart_data_buf[uart_data_idx] = rx_byte;
-
-                uart_data_idx++;
-
-                uart_len--;
-
-                if(uart_len == 0) {
-
-                    uart_apply_command();
-
-                    uart_state = UART_ST_IDLE;
-
-                }
-
-                break;
-
-            case UART_ST_WAIT_CHK:
-
-                uart_chksum = rx_byte;
-
-                uart_apply_command();
-
-                uart_state = UART_ST_IDLE;
-
-                break;
-
-            default: uart_state = UART_ST_IDLE; break;
+            }
 
         }
 

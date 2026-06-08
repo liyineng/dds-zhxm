@@ -1,13 +1,14 @@
 // =======================================================
 // DDS Waveform Generator - TJC8048X550_011C
-// printh∑¢πÃ∂®Õ∑ + prints∑¢raw∂˛Ω¯÷∆±‰¡ø÷µ
-// ∞¸∏Ò Ω: A5 LEN CMD DATA.. (ŒﬁCHK, len==0 ±÷±Ω”÷¥––)
+// FF 6-byte fixed frames: FF [CMD] [D0] [D1] [D2] [D3]
+// CMD = (func<<4)|(ch<<3)  func:0=WAVE 1=FREQ 2=AMP 3=MODE 4=FREQ_IDX
 // =======================================================
 
 // ========== program.s ==========
 // bauds=115200
 
-// ========== “≥√Ê0 ‘§≥ı ºªØ ¬º˛ ==========
+
+// ========== È°µÈù¢0 È¢ÑÂàùÂßãÂåñ‰∫ã‰ª∂ ==========
 n0.val=100
 n1.val=100
 h0.val=127
@@ -20,40 +21,40 @@ b0.bco=34816
 b14.bco=34816
 
 
-// ====== CHA≤®–Œ b0 SIN (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 00 00
+// ====== CHA Ê≥¢ÂΩ¢ b0 SIN ======
+printh FF 00 00 00 00 00
 b0.bco=34816
 b1.bco=2016
 b2.bco=2016
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA≤®–Œ b1 SQU (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 01 00
+// ====== CHA Ê≥¢ÂΩ¢ b1 SQU ======
+printh FF 00 01 00 00 00
 b0.bco=2016
 b1.bco=34816
 b2.bco=2016
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA≤®–Œ b2 TRI (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 02 00
+// ====== CHA Ê≥¢ÂΩ¢ b2 TRI ======
+printh FF 00 02 00 00 00
 b0.bco=2016
 b1.bco=2016
 b2.bco=34816
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA≤®–Œ b3 SAW (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 03 00
+// ====== CHA Ê≥¢ÂΩ¢ b3 SAW ======
+printh FF 00 03 00 00 00
 b0.bco=2016
 b1.bco=2016
 b2.bco=2016
 b3.bco=34816
 b4.bco=2016
 
-// ====== CHA≤®–Œ b4 ARB (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 04 00
+// ====== CHA Ê≥¢ÂΩ¢ b4 ARB ======
+printh FF 00 04 00 00 00
 b0.bco=2016
 b1.bco=2016
 b2.bco=2016
@@ -61,40 +62,40 @@ b3.bco=2016
 b4.bco=34816
 
 
-// ====== CHB≤®–Œ b14 SIN (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 00 01
+// ====== CHB Ê≥¢ÂΩ¢ b14 SIN ======
+printh FF 08 00 00 00 00
 b14.bco=34816
 b15.bco=2016
 b16.bco=2016
 b17.bco=2016
 b18.bco=2016
 
-// ====== CHB≤®–Œ b15 SQU (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 01 01
+// ====== CHB Ê≥¢ÂΩ¢ b15 SQU ======
+printh FF 08 01 00 00 00
 b14.bco=2016
 b15.bco=34816
 b16.bco=2016
 b17.bco=2016
 b18.bco=2016
 
-// ====== CHB≤®–Œ b16 TRI (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 02 01
+// ====== CHB Ê≥¢ÂΩ¢ b16 TRI ======
+printh FF 08 02 00 00 00
 b14.bco=2016
 b15.bco=2016
 b16.bco=34816
 b17.bco=2016
 b18.bco=2016
 
-// ====== CHB≤®–Œ b17 SAW (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 03 01
+// ====== CHB Ê≥¢ÂΩ¢ b17 SAW ======
+printh FF 08 03 00 00 00
 b14.bco=2016
 b15.bco=2016
 b16.bco=2016
 b17.bco=34816
 b18.bco=2016
 
-// ====== CHB≤®–Œ b18 ARB (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 04 01
+// ====== CHB Ê≥¢ÂΩ¢ b18 ARB ======
+printh FF 08 04 00 00 00
 b14.bco=2016
 b15.bco=2016
 b16.bco=2016
@@ -102,47 +103,36 @@ b17.bco=2016
 b18.bco=34816
 
 
-// ====== CHA ∑˘÷µª¨øÈ h0 (÷µ∏ƒ±‰ ¬º˛) ======
-printh A5 03 03
+// ====== CHA ÂπÖÂÄºÊªëÂùó h0 (ÂÄºÊîπÂèò‰∫ã‰ª∂) ======
+printh FF 20
 prints h0.val,1
-printh 00
+printh 00 00 00
 covx h0.val,t3.txt,0,0
 
 
-// ====== CHB ∑˘÷µª¨øÈ h1 (÷µ∏ƒ±‰ ¬º˛) ======
-printh A5 03 03
+// ====== CHB ÂπÖÂÄºÊªëÂùó h1 (ÂÄºÊîπÂèò‰∫ã‰ª∂) ======
+printh FF 28
 prints h1.val,1
-printh 01
+printh 00 00 00
 covx h1.val,t8.txt,0,0
 
 
-// ====== CHA ∆µ¬  SET b10 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
-covx n0.val,t5.txt,0,0
-
-
-// ====== CHB ∆µ¬  SET b19 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
-covx n1.val,t10.txt,0,0
-
-
-// ====== CHA +100 b11 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
+// ====== CHA +100 b11 (Êåâ‰∏ã‰∫ã‰ª∂) ======
 n0.val=n0.val+100
 covx n0.val,t5.txt,0,0
 
-
-// ====== CHA -100 b12 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
+// ====== CHA -100 b12 (Êåâ‰∏ã‰∫ã‰ª∂) ======
 if(n0.val>100)
 {
 n0.val=n0.val-100
 }
 covx n0.val,t5.txt,0,0
 
-
-// ====== CHB +100 b20 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
+// ====== CHB +100 b20 (Êåâ‰∏ã‰∫ã‰ª∂) ======
 n1.val=n1.val+100
 covx n1.val,t10.txt,0,0
 
-
-// ====== CHB -100 b21 (∞¥œ¬ ¬º˛, Ωˆœ‘ æ) ======
+// ====== CHB -100 b21 (Êåâ‰∏ã‰∫ã‰ª∂) ======
 if(n1.val>100)
 {
 n1.val=n1.val-100
@@ -150,33 +140,32 @@ n1.val=n1.val-100
 covx n1.val,t10.txt,0,0
 
 
-// ====== Õ¨≤Ω b13/b33 ON (∞¥œ¬ ¬º˛) ======
-printh A5 02 04 01
+// ====== ÂêåÊ≠• b13/b33 ON ======
+printh FF 30 01 00 00 00
 
-// ====== Õ¨≤Ω b34 OFF (∞¥œ¬ ¬º˛) ======
-printh A5 02 04 00
+// ====== ÂêåÊ≠• b34 OFF ======
+printh FF 30 00 00 00 00
 
 
-// ====== MUTE A b30 (∞¥œ¬ ¬º˛) ======
-printh A5 03 03 00 00
+// ====== MUTE A b30 ======
+printh FF 20 00 00 00 00
 h0.val=0
 t3.txt="0"
 
-
-// ====== MUTE B b31 (∞¥œ¬ ¬º˛) ======
-printh A5 03 03 00 01
+// ====== MUTE B b31 ======
+printh FF 28 00 00 00 00
 h1.val=0
 t8.txt="0"
 
 
-// ====== RESET b32 (∞¥œ¬ ¬º˛) ======
-printh A5 03 01 00 00
-printh A5 03 06 06 00
-printh A5 03 03 7F 00
-printh A5 03 01 00 01
-printh A5 03 06 06 01
-printh A5 03 03 7F 01
-printh A5 02 04 00
+// ====== RESET b32 ======
+printh FF 00 00 00 00 00
+printh FF 40 06 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 00 00 00 00
+printh FF 48 06 00 00 00
+printh FF 28 7F 00 00 00
+printh FF 30 00 00 00 00
 n0.val=100
 n1.val=100
 h0.val=127
@@ -197,213 +186,103 @@ b17.bco=2016
 b18.bco=2016
 
 
-// ====== ‘§…Ë∞¥≈• ======
-
-// b22 100Hz’˝œ“
-printh A5 03 01 00 00
-printh A5 03 06 06 00
-printh A5 03 03 7F 00
-printh A5 03 01 00 01
-printh A5 03 06 06 01
-printh A5 03 03 7F 01
+// ====== b22 100HzÊ≠£Âº¶ ======
+printh FF 00 00 00 00 00
+printh FF 40 06 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 00 00 00 00
+printh FF 48 06 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=100
 n1.val=100
 t5.txt="100 Hz"
 t10.txt="100 Hz"
 
-// b23 1kHz’˝œ“
-printh A5 03 01 00 00
-printh A5 03 06 09 00
-printh A5 03 03 7F 00
-printh A5 03 01 00 01
-printh A5 03 06 09 01
-printh A5 03 03 7F 01
+// ====== b23 1kHzÊ≠£Âº¶ ======
+printh FF 00 00 00 00 00
+printh FF 40 09 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 00 00 00 00
+printh FF 48 09 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=1000
 n1.val=1000
 t5.txt="1000 Hz"
 t10.txt="1000 Hz"
 
-// b24 1kHz∑Ω≤®
-printh A5 03 01 01 00
-printh A5 03 06 09 00
-printh A5 03 03 7F 00
-printh A5 03 01 01 01
-printh A5 03 06 09 01
-printh A5 03 03 7F 01
+// ====== b24 1kHzÊñπÊ≥¢ ======
+printh FF 00 01 00 00 00
+printh FF 40 09 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 01 00 00 00
+printh FF 48 09 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=1000
 n1.val=1000
 t5.txt="1000 Hz"
 t10.txt="1000 Hz"
 
-// b25 10kHz’˝œ“
-printh A5 03 01 00 00
-printh A5 03 06 0C 00
-printh A5 03 03 7F 00
-printh A5 03 01 00 01
-printh A5 03 06 0C 01
-printh A5 03 03 7F 01
+// ====== b25 10kHzÊ≠£Âº¶ ======
+printh FF 00 00 00 00 00
+printh FF 40 0C 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 00 00 00 00
+printh FF 48 0C 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=10000
 n1.val=10000
 t5.txt="10000 Hz"
 t10.txt="10000 Hz"
 
-// b26 10kHz∑Ω≤®
-printh A5 03 01 01 00
-printh A5 03 06 0C 00
-printh A5 03 03 7F 00
-printh A5 03 01 01 01
-printh A5 03 06 0C 01
-printh A5 03 03 7F 01
+// ====== b26 10kHzÊñπÊ≥¢ ======
+printh FF 00 01 00 00 00
+printh FF 40 0C 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 01 00 00 00
+printh FF 48 0C 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=10000
 n1.val=10000
 t5.txt="10000 Hz"
 t10.txt="10000 Hz"
 
-// b27 500Hz’˝œ“
-printh A5 03 01 00 00
-printh A5 03 06 08 00
-printh A5 03 03 7F 00
-printh A5 03 01 00 01
-printh A5 03 06 08 01
-printh A5 03 03 7F 01
+// ====== b27 500HzÊ≠£Âº¶ ======
+printh FF 00 00 00 00 00
+printh FF 40 08 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 00 00 00 00
+printh FF 48 08 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=500
 n1.val=500
 t5.txt="500 Hz"
 t10.txt="500 Hz"
 
-// b28 50Hz»˝Ω«
-printh A5 03 01 02 00
-printh A5 03 06 05 00
-printh A5 03 03 7F 00
-printh A5 03 01 02 01
-printh A5 03 06 05 01
-printh A5 03 03 7F 01
+// ====== b28 50Hz‰∏âËßí ======
+printh FF 00 02 00 00 00
+printh FF 40 05 00 00 00
+printh FF 20 7F 00 00 00
+printh FF 08 02 00 00 00
+printh FF 48 05 00 00 00
+printh FF 28 7F 00 00 00
 n0.val=50
 n1.val=50
 t5.txt="50 Hz"
 t10.txt="50 Hz"
 
-// ==================== ∆µ¬ ª¨øÈ (ÃÌº”µΩ2.HMI_code.txtƒ©Œ≤) ====================
-// ‘⁄TJC¿ÔÃÌº”ª¨øÈ: h2(CHA∆µ¬ ) h3(CHB∆µ¬ ), maxval=13, valƒ¨»œ6(100Hz)
-// “≥√Ê≥ı ºªØº”: h2.val=6;h3.val=6
 
-// ---------- h2 CHA∆µ¬  (÷µ∏ƒ±‰ ¬º˛) ----------
-if(h2.val==0)
-{
-printh A5 03 06 00 00
-}
-if(h2.val==1)
-{
-printh A5 03 06 01 00
-}
-if(h2.val==2)
-{
-printh A5 03 06 02 00
-}
-if(h2.val==3)
-{
-printh A5 03 06 03 00
-}
-if(h2.val==4)
-{
-printh A5 03 06 04 00
-}
-if(h2.val==5)
-{
-printh A5 03 06 05 00
-}
-if(h2.val==6)
-{
-printh A5 03 06 06 00
-}
-if(h2.val==7)
-{
-printh A5 03 06 07 00
-}
-if(h2.val==8)
-{
-printh A5 03 06 08 00
-}
-if(h2.val==9)
-{
-printh A5 03 06 09 00
-}
-if(h2.val==10)
-{
-printh A5 03 06 0A 00
-}
-if(h2.val==11)
-{
-printh A5 03 06 0B 00
-}
-if(h2.val==12)
-{
-printh A5 03 06 0C 00
-}
-if(h2.val==13)
-{
-printh A5 03 06 0D 00
-}
+// ==================== È¢ëÁéáÊªëÂùó ====================
+// TJCÈáåÂä†ÊªëÂùó: h2(CHA) h3(CHB), maxval=13, ÈªòËÆ§6(100Hz)
+// È°µÈù¢ÂàùÂßãÂåñ: h2.val=6;h3.val=6
+// Á¥¢Âºï: 0=1Hz 1=2Hz 2=5Hz 3=10Hz 4=20Hz 5=50Hz 6=100Hz
+//       7=200Hz 8=500Hz 9=1kHz 10=2kHz 11=5kHz 12=10kHz 13=20kHz
 
-// ---------- h3 CHB∆µ¬  (÷µ∏ƒ±‰ ¬º˛) ----------
+// ---------- h2 CHAÈ¢ëÁéá (ÂÄºÊîπÂèò‰∫ã‰ª∂) ----------
+printh FF 40
+prints h2.val,1
+printh 00 00 00
 
-if(h3.val==0)
-{
-printh A5 03 06 00 01
-}
-if(h3.val==1)
-{
-printh A5 03 06 01 01
-}
-if(h3.val==2)
-{
-printh A5 03 06 02 01
-}
-if(h3.val==3)
-{
-printh A5 03 06 03 01
-}
-if(h3.val==4)
-{
-printh A5 03 06 04 01
-}
-if(h3.val==5)
-{
-printh A5 03 06 05 01
-}
-if(h3.val==6)
-{
-printh A5 03 06 06 01
-}
-if(h3.val==7)
-{
-printh A5 03 06 07 01
-}
-if(h3.val==8)
-{
-printh A5 03 06 08 01
-}
-if(h3.val==9)
-{
-printh A5 03 06 09 01
-}
-if(h3.val==10)
-{
-printh A5 03 06 0A 01
-}
-if(h3.val==11)
-{
-printh A5 03 06 0B 01
-}
-if(h3.val==12)
-{
-printh A5 03 06 0C 01
-}
-if(h3.val==13)
-{
-printh A5 03 06 0D 01
-}
-
-// ª¨øÈŒª÷√∂‘”¶∆µ¬ :
-// 0:1Hz 1:2Hz 2:5Hz 3:10Hz 4:20Hz 5:50Hz 6:100Hz 7:200Hz
-// 8:500Hz 9:1kHz 10:2kHz 11:5kHz 12:10kHz 13:20kHz
+// ---------- h3 CHBÈ¢ëÁéá (ÂÄºÊîπÂèò‰∫ã‰ª∂) ----------
+printh FF 48
+prints h3.val,1
+printh 00 00 00
