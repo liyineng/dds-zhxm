@@ -1,7 +1,7 @@
 // =======================================================
-// DDS Waveform Generator - TJC8048X550_011C
-// FF 6-byte fixed frames: FF [CMD] [D0] [D1] [D2] [D3]
-// CMD = (func<<4)|(ch<<3)  func:0=WAVE 1=FREQ 2=AMP 3=MODE 4=FREQ_IDX
+// DDS Waveform Generator - Single Channel CHA
+// FF [CMD] [D0] [D1] [D2] [D3]
+// CMD = func<<4
 // =======================================================
 
 // ========== program.s ==========
@@ -9,19 +9,14 @@
 
 
 // ========== 页面0 预初始化事件 ==========
-n0.val=100
-n1.val=100
 h0.val=127
-h1.val=127
+h2.val=6
 t3.txt="127"
-t8.txt="127"
 t5.txt="100 Hz"
-t10.txt="100 Hz"
 b0.bco=34816
-b14.bco=34816
 
 
-// ====== CHA 波形 b0 SIN ======
+// ====== 波形 b0 SIN ======
 printh FF 00 00 00 00 00
 b0.bco=34816
 b1.bco=2016
@@ -29,7 +24,7 @@ b2.bco=2016
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA 波形 b1 SQU ======
+// ====== 波形 b1 SQU ======
 printh FF 00 01 00 00 00
 b0.bco=2016
 b1.bco=34816
@@ -37,7 +32,7 @@ b2.bco=2016
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA 波形 b2 TRI ======
+// ====== 波形 b2 TRI ======
 printh FF 00 02 00 00 00
 b0.bco=2016
 b1.bco=2016
@@ -45,7 +40,7 @@ b2.bco=34816
 b3.bco=2016
 b4.bco=2016
 
-// ====== CHA 波形 b3 SAW ======
+// ====== 波形 b3 SAW ======
 printh FF 00 03 00 00 00
 b0.bco=2016
 b1.bco=2016
@@ -53,7 +48,7 @@ b2.bco=2016
 b3.bco=34816
 b4.bco=2016
 
-// ====== CHA 波形 b4 ARB ======
+// ====== 波形 b4 ARB ======
 printh FF 00 04 00 00 00
 b0.bco=2016
 b1.bco=2016
@@ -62,227 +57,104 @@ b3.bco=2016
 b4.bco=34816
 
 
-// ====== CHB 波形 b14 SIN ======
-printh FF 08 00 00 00 00
-b14.bco=34816
-b15.bco=2016
-b16.bco=2016
-b17.bco=2016
-b18.bco=2016
-
-// ====== CHB 波形 b15 SQU ======
-printh FF 08 01 00 00 00
-b14.bco=2016
-b15.bco=34816
-b16.bco=2016
-b17.bco=2016
-b18.bco=2016
-
-// ====== CHB 波形 b16 TRI ======
-printh FF 08 02 00 00 00
-b14.bco=2016
-b15.bco=2016
-b16.bco=34816
-b17.bco=2016
-b18.bco=2016
-
-// ====== CHB 波形 b17 SAW ======
-printh FF 08 03 00 00 00
-b14.bco=2016
-b15.bco=2016
-b16.bco=2016
-b17.bco=34816
-b18.bco=2016
-
-// ====== CHB 波形 b18 ARB ======
-printh FF 08 04 00 00 00
-b14.bco=2016
-b15.bco=2016
-b16.bco=2016
-b17.bco=2016
-b18.bco=34816
-
-
-// ====== CHA 幅值滑块 h0 (值改变事件) ======
+// ====== 幅值滑块 h0 (值改变事件) ======
 printh FF 20
 prints h0.val,1
 printh 00 00 00
 covx h0.val,t3.txt,0,0
 
 
-// ====== CHB 幅值滑块 h1 (值改变事件) ======
-printh FF 28
-prints h1.val,1
-printh 00 00 00
-covx h1.val,t8.txt,0,0
-
-
-// ====== CHA +100 b11 (按下事件) ======
-n0.val=n0.val+100
-covx n0.val,t5.txt,0,0
-
-// ====== CHA -100 b12 (按下事件) ======
-if(n0.val>100)
-{
-n0.val=n0.val-100
-}
-covx n0.val,t5.txt,0,0
-
-// ====== CHB +100 b20 (按下事件) ======
-n1.val=n1.val+100
-covx n1.val,t10.txt,0,0
-
-// ====== CHB -100 b21 (按下事件) ======
-if(n1.val>100)
-{
-n1.val=n1.val-100
-}
-covx n1.val,t10.txt,0,0
-
-
-// ====== 同步 b13/b33 ON ======
-printh FF 30 01 00 00 00
-
-// ====== 同步 b34 OFF ======
-printh FF 30 00 00 00 00
-
-
-// ====== MUTE A b30 ======
+// ====== MUTE b30 ======
 printh FF 20 00 00 00 00
 h0.val=0
 t3.txt="0"
-
-// ====== MUTE B b31 ======
-printh FF 28 00 00 00 00
-h1.val=0
-t8.txt="0"
 
 
 // ====== RESET b32 ======
 printh FF 00 00 00 00 00
 printh FF 40 06 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 00 00 00 00
-printh FF 48 06 00 00 00
-printh FF 28 7F 00 00 00
-printh FF 30 00 00 00 00
-n0.val=100
-n1.val=100
 h0.val=127
-h1.val=127
+h2.val=6
 t3.txt="127"
-t8.txt="127"
 t5.txt="100 Hz"
-t10.txt="100 Hz"
 b0.bco=34816
 b1.bco=2016
 b2.bco=2016
 b3.bco=2016
 b4.bco=2016
-b14.bco=34816
-b15.bco=2016
-b16.bco=2016
-b17.bco=2016
-b18.bco=2016
 
 
 // ====== b22 100Hz正弦 ======
 printh FF 00 00 00 00 00
 printh FF 40 06 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 00 00 00 00
-printh FF 48 06 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=100
-n1.val=100
+h0.val=127
+h2.val=6
+t3.txt="127"
 t5.txt="100 Hz"
-t10.txt="100 Hz"
 
 // ====== b23 1kHz正弦 ======
 printh FF 00 00 00 00 00
 printh FF 40 09 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 00 00 00 00
-printh FF 48 09 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=1000
-n1.val=1000
+h0.val=127
+h2.val=9
+t3.txt="127"
 t5.txt="1000 Hz"
-t10.txt="1000 Hz"
 
 // ====== b24 1kHz方波 ======
 printh FF 00 01 00 00 00
 printh FF 40 09 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 01 00 00 00
-printh FF 48 09 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=1000
-n1.val=1000
+h0.val=127
+h2.val=9
+t3.txt="127"
 t5.txt="1000 Hz"
-t10.txt="1000 Hz"
 
 // ====== b25 10kHz正弦 ======
 printh FF 00 00 00 00 00
 printh FF 40 0C 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 00 00 00 00
-printh FF 48 0C 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=10000
-n1.val=10000
+h0.val=127
+h2.val=12
+t3.txt="127"
 t5.txt="10000 Hz"
-t10.txt="10000 Hz"
 
 // ====== b26 10kHz方波 ======
 printh FF 00 01 00 00 00
 printh FF 40 0C 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 01 00 00 00
-printh FF 48 0C 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=10000
-n1.val=10000
+h0.val=127
+h2.val=12
+t3.txt="127"
 t5.txt="10000 Hz"
-t10.txt="10000 Hz"
 
 // ====== b27 500Hz正弦 ======
 printh FF 00 00 00 00 00
 printh FF 40 08 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 00 00 00 00
-printh FF 48 08 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=500
-n1.val=500
+h0.val=127
+h2.val=8
+t3.txt="127"
 t5.txt="500 Hz"
-t10.txt="500 Hz"
 
 // ====== b28 50Hz三角 ======
 printh FF 00 02 00 00 00
 printh FF 40 05 00 00 00
 printh FF 20 7F 00 00 00
-printh FF 08 02 00 00 00
-printh FF 48 05 00 00 00
-printh FF 28 7F 00 00 00
-n0.val=50
-n1.val=50
+h0.val=127
+h2.val=5
+t3.txt="127"
 t5.txt="50 Hz"
-t10.txt="50 Hz"
 
 
 // ==================== 频率滑块 ====================
-// TJC里加滑块: h2(CHA) h3(CHB), maxval=13, 默认6(100Hz)
-// 页面初始化: h2.val=6;h3.val=6
+// 滑块: h2, maxval=13, 默认6(100Hz)
 // 索引: 0=1Hz 1=2Hz 2=5Hz 3=10Hz 4=20Hz 5=50Hz 6=100Hz
 //       7=200Hz 8=500Hz 9=1kHz 10=2kHz 11=5kHz 12=10kHz 13=20kHz
 
-// ---------- h2 CHA频率 (值改变事件) ----------
+// ---------- h2 频率 (值改变事件) ----------
 printh FF 40
 prints h2.val,1
-printh 00 00 00
-
-// ---------- h3 CHB频率 (值改变事件) ----------
-printh FF 48
-prints h3.val,1
 printh 00 00 00
