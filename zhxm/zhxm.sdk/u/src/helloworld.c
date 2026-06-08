@@ -403,7 +403,7 @@ void update_hardware_timer(u32 freq_hz)
 
     Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET,
 
-              ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
+              (tcsr & (1<<3)) | ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
 
 }
 
