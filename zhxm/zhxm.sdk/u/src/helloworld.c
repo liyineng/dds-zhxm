@@ -611,6 +611,14 @@ void UART_Handler(void)
 
             case UART_ST_WAIT_DATA:
 
+                if(uart_data_idx >= 128) {
+
+                    uart_state = UART_ST_IDLE;
+
+                    break;
+
+                }
+
                 uart_data_buf[uart_data_idx] = rx_byte;
 
                 uart_data_idx++;
