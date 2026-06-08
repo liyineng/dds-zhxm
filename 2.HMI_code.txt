@@ -171,12 +171,10 @@ t8.txt="0"
 
 // ====== RESET b32 (按下事件) ======
 printh A5 03 01 00 00
-printh A5 06 02
-printh 64 00 00 00 00
+printh A5 03 06 06 00
 printh A5 03 03 7F 00
 printh A5 03 01 00 01
-printh A5 06 02
-printh 64 00 00 00 01
+printh A5 03 06 06 01
 printh A5 03 03 7F 01
 printh A5 02 04 00
 n0.val=100
@@ -203,12 +201,10 @@ b18.bco=2016
 
 // b22 100Hz正弦
 printh A5 03 01 00 00
-printh A5 06 02
-printh 64 00 00 00 00
+printh A5 03 06 06 00
 printh A5 03 03 7F 00
 printh A5 03 01 00 01
-printh A5 06 02
-printh 64 00 00 00 01
+printh A5 03 06 06 01
 printh A5 03 03 7F 01
 n0.val=100
 n1.val=100
@@ -217,12 +213,10 @@ t10.txt="100 Hz"
 
 // b23 1kHz正弦
 printh A5 03 01 00 00
-printh A5 06 02
-printh E8 03 00 00 00
+printh A5 03 06 09 00
 printh A5 03 03 7F 00
 printh A5 03 01 00 01
-printh A5 06 02
-printh E8 03 00 00 01
+printh A5 03 06 09 01
 printh A5 03 03 7F 01
 n0.val=1000
 n1.val=1000
@@ -231,12 +225,10 @@ t10.txt="1000 Hz"
 
 // b24 1kHz方波
 printh A5 03 01 01 00
-printh A5 06 02
-printh E8 03 00 00 00
+printh A5 03 06 09 00
 printh A5 03 03 7F 00
 printh A5 03 01 01 01
-printh A5 06 02
-printh E8 03 00 00 01
+printh A5 03 06 09 01
 printh A5 03 03 7F 01
 n0.val=1000
 n1.val=1000
@@ -245,12 +237,10 @@ t10.txt="1000 Hz"
 
 // b25 10kHz正弦
 printh A5 03 01 00 00
-printh A5 06 02
-printh 10 27 00 00 00
+printh A5 03 06 0C 00
 printh A5 03 03 7F 00
 printh A5 03 01 00 01
-printh A5 06 02
-printh 10 27 00 00 01
+printh A5 03 06 0C 01
 printh A5 03 03 7F 01
 n0.val=10000
 n1.val=10000
@@ -259,12 +249,10 @@ t10.txt="10000 Hz"
 
 // b26 10kHz方波
 printh A5 03 01 01 00
-printh A5 06 02
-printh 10 27 00 00 00
+printh A5 03 06 0C 00
 printh A5 03 03 7F 00
 printh A5 03 01 01 01
-printh A5 06 02
-printh 10 27 00 00 01
+printh A5 03 06 0C 01
 printh A5 03 03 7F 01
 n0.val=10000
 n1.val=10000
@@ -273,12 +261,10 @@ t10.txt="10000 Hz"
 
 // b27 500Hz正弦
 printh A5 03 01 00 00
-printh A5 06 02
-printh F4 01 00 00 00
+printh A5 03 06 08 00
 printh A5 03 03 7F 00
 printh A5 03 01 00 01
-printh A5 06 02
-printh F4 01 00 00 01
+printh A5 03 06 08 01
 printh A5 03 03 7F 01
 n0.val=500
 n1.val=500
@@ -287,12 +273,10 @@ t10.txt="500 Hz"
 
 // b28 50Hz三角
 printh A5 03 01 02 00
-printh A5 06 02
-printh 32 00 00 00 00
+printh A5 03 06 05 00
 printh A5 03 03 7F 00
 printh A5 03 01 02 01
-printh A5 06 02
-printh 32 00 00 00 01
+printh A5 03 06 05 01
 printh A5 03 03 7F 01
 n0.val=50
 n1.val=50
@@ -306,146 +290,118 @@ t10.txt="50 Hz"
 // ---------- h2 CHA频率 (值改变事件) ----------
 if(h2.val==0)
 {
-printh A5 06 02
-printh 01 00 00 00 00
+printh A5 03 06 00 00
 }
 if(h2.val==1)
 {
-printh A5 06 02
-printh 02 00 00 00 00
+printh A5 03 06 01 00
 }
 if(h2.val==2)
 {
-printh A5 06 02
-printh 05 00 00 00 00
+printh A5 03 06 02 00
 }
 if(h2.val==3)
 {
-printh A5 06 02
-printh 0A 00 00 00 00
+printh A5 03 06 03 00
 }
 if(h2.val==4)
 {
-printh A5 06 02
-printh 14 00 00 00 00
+printh A5 03 06 04 00
 }
 if(h2.val==5)
 {
-printh A5 06 02
-printh 32 00 00 00 00
+printh A5 03 06 05 00
 }
 if(h2.val==6)
 {
-printh A5 06 02
-printh 64 00 00 00 00
+printh A5 03 06 06 00
 }
 if(h2.val==7)
 {
-printh A5 06 02
-printh C8 00 00 00 00
+printh A5 03 06 07 00
 }
 if(h2.val==8)
 {
-printh A5 06 02
-printh F4 01 00 00 00
+printh A5 03 06 08 00
 }
 if(h2.val==9)
 {
-printh A5 06 02
-printh E8 03 00 00 00
+printh A5 03 06 09 00
 }
 if(h2.val==10)
 {
-printh A5 06 02
-printh D0 07 00 00 00
+printh A5 03 06 0A 00
 }
 if(h2.val==11)
 {
-printh A5 06 02
-printh 88 13 00 00 00
+printh A5 03 06 0B 00
 }
 if(h2.val==12)
 {
-printh A5 06 02
-printh 10 27 00 00 00
+printh A5 03 06 0C 00
 }
 if(h2.val==13)
 {
-printh A5 06 02
-printh 20 4E 00 00 00
+printh A5 03 06 0D 00
 }
 
 // ---------- h3 CHB频率 (值改变事件) ----------
 
 if(h3.val==0)
 {
-printh A5 06 02
-printh 01 00 00 00 01
+printh A5 03 06 00 01
 }
 if(h3.val==1)
 {
-printh A5 06 02
-printh 02 00 00 00 01
+printh A5 03 06 01 01
 }
 if(h3.val==2)
 {
-printh A5 06 02
-printh 05 00 00 00 01
+printh A5 03 06 02 01
 }
 if(h3.val==3)
 {
-printh A5 06 02
-printh 0A 00 00 00 01
+printh A5 03 06 03 01
 }
 if(h3.val==4)
 {
-printh A5 06 02
-printh 14 00 00 00 01
+printh A5 03 06 04 01
 }
 if(h3.val==5)
 {
-printh A5 06 02
-printh 32 00 00 00 01
+printh A5 03 06 05 01
 }
 if(h3.val==6)
 {
-printh A5 06 02
-printh 64 00 00 00 01
+printh A5 03 06 06 01
 }
 if(h3.val==7)
 {
-printh A5 06 02
-printh C8 00 00 00 01
+printh A5 03 06 07 01
 }
 if(h3.val==8)
 {
-printh A5 06 02
-printh F4 01 00 00 01
+printh A5 03 06 08 01
 }
 if(h3.val==9)
 {
-printh A5 06 02
-printh E8 03 00 00 01
+printh A5 03 06 09 01
 }
 if(h3.val==10)
 {
-printh A5 06 02
-printh D0 07 00 00 01
+printh A5 03 06 0A 01
 }
 if(h3.val==11)
 {
-printh A5 06 02
-printh 88 13 00 00 01
+printh A5 03 06 0B 01
 }
 if(h3.val==12)
 {
-printh A5 06 02
-printh 10 27 00 00 01
+printh A5 03 06 0C 01
 }
 if(h3.val==13)
 {
-printh A5 06 02
-printh 20 4E 00 00 01
+printh A5 03 06 0D 01
 }
 
 // 滑块位置对应频率:

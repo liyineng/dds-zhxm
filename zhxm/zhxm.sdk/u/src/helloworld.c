@@ -88,12 +88,11 @@
 
 
 
-#define TIMER_CLK_HZ         50000000
+#define TIMER_CLK_HZ         100000000
 
 #define SAMPLES_PER_CYCLE    128              // 改为128�?
 
-#define DEFAULT_FREQ_HZ      3000
-
+#define DEFAULT_FREQ_HZ      300
 
 
 #define WAVE_SINE       0
@@ -118,6 +117,8 @@
 #define CMD_SET_MODE    0x04
 
 #define CMD_SET_ARB     0x05
+
+#define CMD_SET_FREQ_IDX  0x06
 
 
 
@@ -238,6 +239,9 @@ u8 arbitrary_table[128];
 // 波形指针数组（快速查表）
 
 const u8* wave_tables[5] = { sine_table, square_table, triangle_table, sawtooth_table, arbitrary_table };
+
+
+const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000 };
 
 
 
@@ -519,6 +523,28 @@ void uart_apply_command(void)
 
             break;
 
+        case CMD_SET_FREQ_IDX:
+
+            if(uart_data_buf[0] > 13) break;
+
+            new_freq = freq_table[uart_data_buf[0]];
+
+            if(uart_data_buf[1] == 0) {
+
+                freq_hz_a = new_freq;
+
+                update_hardware_timer(freq_hz_a);
+
+            } else if(uart_data_buf[1] == 1) {
+
+                freq_hz_b = new_freq;
+
+                if(!sync_mode) update_hardware_timer(freq_hz_b);
+
+            }
+
+            break;
+
         default: break;
 
     }
@@ -610,6 +636,14 @@ void UART_Handler(void)
                 break;
 
             case UART_ST_WAIT_DATA:
+
+                if(uart_data_idx >= 200) {
+
+                    uart_state = UART_ST_IDLE;
+
+                    break;
+
+                }
 
                 uart_data_buf[uart_data_idx] = rx_byte;
 
