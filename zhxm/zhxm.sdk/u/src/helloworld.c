@@ -109,15 +109,21 @@
 
 
 
-#define CMD_SET_WAVE    0x01
+#define CMD_SET_WAVE_A  0x01
 
-#define CMD_SET_FREQ    0x02
+#define CMD_SET_WAVE_B  0x02
 
-#define CMD_SET_AMP     0x03
+#define CMD_SET_FREQ_A  0x03
 
-#define CMD_SET_MODE    0x04
+#define CMD_SET_FREQ_B  0x04
 
-#define CMD_SET_ARB     0x05
+#define CMD_SET_AMP_A   0x05
+
+#define CMD_SET_AMP_B   0x06
+
+#define CMD_SET_MODE    0x07
+
+#define CMD_SET_ARB     0x08
 
 
 
@@ -441,25 +447,23 @@ void uart_apply_command(void)
 
     {
 
-        case CMD_SET_WAVE:
+        case CMD_SET_WAVE_A:
 
-            if(uart_data_buf[1] == 0) {
+            wave_type_a = uart_data_buf[0];
 
-                wave_type_a = uart_data_buf[0];
-
-                table_index_a = 0;
-
-            } else if(uart_data_buf[1] == 1) {
-
-                wave_type_b = uart_data_buf[0];
-
-                table_index_b = 0;
-
-            }
+            table_index_a = 0;
 
             break;
 
-        case CMD_SET_FREQ:
+        case CMD_SET_WAVE_B:
+
+            wave_type_b = uart_data_buf[0];
+
+            table_index_b = 0;
+
+            break;
+
+        case CMD_SET_FREQ_A:
 
             new_freq = ((u32)uart_data_buf[0])
 
@@ -469,27 +473,37 @@ void uart_apply_command(void)
 
                      | ((u32)uart_data_buf[3] << 24);
 
-            if(uart_data_buf[4] == 0) {
+            freq_hz_a = new_freq;
 
-                freq_hz_a = new_freq;
-
-                update_hardware_timer(freq_hz_a);
-
-            } else if(uart_data_buf[4] == 1) {
-
-                freq_hz_b = new_freq;
-
-                if(!sync_mode) update_hardware_timer(freq_hz_b);
-
-            }
+            update_hardware_timer(freq_hz_a);
 
             break;
 
-        case CMD_SET_AMP:
+        case CMD_SET_FREQ_B:
 
-            if(uart_data_buf[1] == 0) amplitude_a = uart_data_buf[0];
+            new_freq = ((u32)uart_data_buf[0])
 
-            else if(uart_data_buf[1] == 1) amplitude_b = uart_data_buf[0];
+                     | ((u32)uart_data_buf[1] << 8)
+
+                     | ((u32)uart_data_buf[2] << 16)
+
+                     | ((u32)uart_data_buf[3] << 24);
+
+            freq_hz_b = new_freq;
+
+            if(!sync_mode) update_hardware_timer(freq_hz_b);
+
+            break;
+
+        case CMD_SET_AMP_A:
+
+            amplitude_a = uart_data_buf[0];
+
+            break;
+
+        case CMD_SET_AMP_B:
+
+            amplitude_b = uart_data_buf[0];
 
             break;
 

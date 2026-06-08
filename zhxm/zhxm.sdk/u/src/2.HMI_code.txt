@@ -1,0 +1,414 @@
+// =======================================================
+// DDS Waveform Generator - TJC8048X550_011C 串口屏程序
+// 二进制协议: A5 LEN CMD DATA
+// CMD: 01=WAVE_A 02=WAVE_B 03=FREQ_A(4B) 04=FREQ_B(4B)
+//       05=AMP_A 06=AMP_B 07=MODE 08=ARB(128B)
+// =======================================================
+
+// ========== program.s ==========
+// bauds=115200
+
+
+// ========== 页面0 预初始化事件 ==========
+n0.val=100
+n1.val=100
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="100 Hz"
+t10.txt="100 Hz"
+b0.bco=34816
+b14.bco=34816
+
+
+// ====== CHA 波形 b0 SIN ======
+printh A5 02 01
+printh 00
+b0.bco=34816
+b1.bco=2016
+b2.bco=2016
+b3.bco=2016
+b4.bco=2016
+
+// ====== CHA 波形 b1 SQU ======
+printh A5 02 01
+printh 01
+b0.bco=2016
+b1.bco=34816
+b2.bco=2016
+b3.bco=2016
+b4.bco=2016
+
+// ====== CHA 波形 b2 TRI ======
+printh A5 02 01
+printh 02
+b0.bco=2016
+b1.bco=2016
+b2.bco=34816
+b3.bco=2016
+b4.bco=2016
+
+// ====== CHA 波形 b3 SAW ======
+printh A5 02 01
+printh 03
+b0.bco=2016
+b1.bco=2016
+b2.bco=2016
+b3.bco=34816
+b4.bco=2016
+
+// ====== CHA 波形 b4 ARB ======
+printh A5 02 01
+printh 04
+b0.bco=2016
+b1.bco=2016
+b2.bco=2016
+b3.bco=2016
+b4.bco=34816
+
+
+// ====== CHB 波形 b14 SIN ======
+printh A5 02 02
+printh 00
+b14.bco=34816
+b15.bco=2016
+b16.bco=2016
+b17.bco=2016
+b18.bco=2016
+
+// ====== CHB 波形 b15 SQU ======
+printh A5 02 02
+printh 01
+b14.bco=2016
+b15.bco=34816
+b16.bco=2016
+b17.bco=2016
+b18.bco=2016
+
+// ====== CHB 波形 b16 TRI ======
+printh A5 02 02
+printh 02
+b14.bco=2016
+b15.bco=2016
+b16.bco=34816
+b17.bco=2016
+b18.bco=2016
+
+// ====== CHB 波形 b17 SAW ======
+printh A5 02 02
+printh 03
+b14.bco=2016
+b15.bco=2016
+b16.bco=2016
+b17.bco=34816
+b18.bco=2016
+
+// ====== CHB 波形 b18 ARB ======
+printh A5 02 02
+printh 04
+b14.bco=2016
+b15.bco=2016
+b16.bco=2016
+b17.bco=2016
+b18.bco=34816
+
+
+// ====== CHA 幅值 滑块 h0 (值改变事件) ======
+covx h0.val,t3.txt,0,0
+printh A5 02 05
+prints h0.val,1
+
+
+// ====== CHB 幅值 滑块 h1 (值改变事件) ======
+covx h1.val,t8.txt,0,0
+printh A5 02 06
+prints h1.val,1
+
+
+// ====== CHA 频率 SET b10 (按下事件) ======
+covx n0.val,t5.txt,0,0
+printh A5 05 03
+prints n0.val,4
+
+
+// ====== CHB 频率 SET b19 (按下事件) ======
+covx n1.val,t10.txt,0,0
+printh A5 05 04
+prints n1.val,4
+
+
+// ====== CHA +100 b11 (按下事件) ======
+n0.val=n0.val+100
+covx n0.val,t5.txt,0,0
+printh A5 05 03
+prints n0.val,4
+
+
+// ====== CHA -100 b12 (按下事件) ======
+if(n0.val>100)
+{
+  n0.val=n0.val-100
+}
+covx n0.val,t5.txt,0,0
+printh A5 05 03
+prints n0.val,4
+
+
+// ====== CHB +100 b20 (按下事件) ======
+n1.val=n1.val+100
+covx n1.val,t10.txt,0,0
+printh A5 05 04
+prints n1.val,4
+
+
+// ====== CHB -100 b21 (按下事件) ======
+if(n1.val>100)
+{
+  n1.val=n1.val-100
+}
+covx n1.val,t10.txt,0,0
+printh A5 05 04
+prints n1.val,4
+
+
+// ====== SYNC ON b13 / b33 (按下事件) ======
+printh A5 02 07
+printh 01
+
+// ====== SYNC OFF b34 (按下事件) ======
+printh A5 02 07
+printh 00
+
+
+// ====== 预设: 100Hz正弦 b22 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 100,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 100,0
+printh A5 02 06
+prints 127,1
+n0.val=100
+n1.val=100
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="100 Hz"
+t10.txt="100 Hz"
+
+
+// ====== 预设: 500Hz正弦 b23 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 500,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 500,0
+printh A5 02 06
+prints 127,1
+n0.val=500
+n1.val=500
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="500 Hz"
+t10.txt="500 Hz"
+
+
+// ====== 预设: 1kHz正弦 b24 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 1000,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 1000,0
+printh A5 02 06
+prints 127,1
+n0.val=1000
+n1.val=1000
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="1000 Hz"
+t10.txt="1000 Hz"
+
+
+// ====== 预设: 1kHz方波 b25 (按下事件) ======
+printh A5 02 01
+printh 01
+printh A5 05 03
+prints 1000,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 01
+printh A5 05 04
+prints 1000,0
+printh A5 02 06
+prints 127,1
+n0.val=1000
+n1.val=1000
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="1000 Hz"
+t10.txt="1000 Hz"
+
+
+// ====== 预设: 5kHz正弦 b26 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 5000,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 5000,0
+printh A5 02 06
+prints 127,1
+n0.val=5000
+n1.val=5000
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="5000 Hz"
+t10.txt="5000 Hz"
+
+
+// ====== 预设: 10kHz正弦 b27 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 10000,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 10000,0
+printh A5 02 06
+prints 127,1
+n0.val=10000
+n1.val=10000
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="10000 Hz"
+t10.txt="10000 Hz"
+
+
+// ====== 预设: 10kHz方波 b28 (按下事件) ======
+printh A5 02 01
+printh 01
+printh A5 05 03
+prints 10000,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 01
+printh A5 05 04
+prints 10000,0
+printh A5 02 06
+prints 127,1
+n0.val=10000
+n1.val=10000
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="10000 Hz"
+t10.txt="10000 Hz"
+
+
+// ====== 预设: 50Hz三角 b29 (按下事件) ======
+printh A5 02 01
+printh 02
+printh A5 05 03
+prints 50,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 02
+printh A5 05 04
+prints 50,0
+printh A5 02 06
+prints 127,1
+n0.val=50
+n1.val=50
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="50 Hz"
+t10.txt="50 Hz"
+
+
+// ====== MUTE A b30 (按下事件) ======
+printh A5 02 05
+printh 00
+h0.val=0
+t3.txt="0"
+
+
+// ====== MUTE B b31 (按下事件) ======
+printh A5 02 06
+printh 00
+h1.val=0
+t8.txt="0"
+
+
+// ====== RESET b32 (按下事件) ======
+printh A5 02 01
+printh 00
+printh A5 05 03
+prints 100,0
+printh A5 02 05
+prints 127,1
+printh A5 02 02
+printh 00
+printh A5 05 04
+prints 100,0
+printh A5 02 06
+prints 127,1
+printh A5 02 07
+printh 00
+n0.val=100
+n1.val=100
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="100 Hz"
+t10.txt="100 Hz"
+b0.bco=34816
+b1.bco=2016
+b2.bco=2016
+b3.bco=2016
+b4.bco=2016
+b14.bco=34816
+b15.bco=2016
+b16.bco=2016
+b17.bco=2016
+b18.bco=2016
