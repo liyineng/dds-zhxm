@@ -119,8 +119,6 @@
 
 #define CMD_SET_ARB     0x05
 
-#define CMD_SET_FREQ_IDX  0x06
-
 
 
 #define UART_SYNC        0xA5
@@ -240,12 +238,6 @@ u8 arbitrary_table[128];
 // 波形指针数组（快速查表）
 
 const u8* wave_tables[5] = { sine_table, square_table, triangle_table, sawtooth_table, arbitrary_table };
-
-
-
-// 频率索引查表（TJC滑块发索引，MCU转实际频率）
-
-const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000 };
 
 
 
@@ -411,7 +403,7 @@ void update_hardware_timer(u32 freq_hz)
 
     Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET,
 
-              (tcsr & (1<<3)) | ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
+              ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
 
 }
 
@@ -484,28 +476,6 @@ void uart_apply_command(void)
                 update_hardware_timer(freq_hz_a);
 
             } else if(uart_data_buf[4] == 1) {
-
-                freq_hz_b = new_freq;
-
-                if(!sync_mode) update_hardware_timer(freq_hz_b);
-
-            }
-
-            break;
-
-        case CMD_SET_FREQ_IDX:
-
-            if(uart_data_buf[0] > 13) break;
-
-            new_freq = freq_table[uart_data_buf[0]];
-
-            if(uart_data_buf[1] == 0) {
-
-                freq_hz_a = new_freq;
-
-                update_hardware_timer(freq_hz_a);
-
-            } else if(uart_data_buf[1] == 1) {
 
                 freq_hz_b = new_freq;
 
@@ -640,14 +610,6 @@ void UART_Handler(void)
                 break;
 
             case UART_ST_WAIT_DATA:
-
-                if(uart_data_idx >= 128) {
-
-                    uart_state = UART_ST_IDLE;
-
-                    break;
-
-                }
 
                 uart_data_buf[uart_data_idx] = rx_byte;
 
