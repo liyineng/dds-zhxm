@@ -1,0 +1,232 @@
+// =======================================================
+// DDS Waveform Generator - TJC8048X550_011C
+// 所有命令走二进制协议: A5 LEN CMD DATA... CHK(现在填00)
+// =======================================================
+
+
+// ========== program.s ==========
+// bauds=115200
+
+
+// ========== 页面0 预初始化事件 ==========
+n0.val=100
+n1.val=100
+h0.val=127
+h1.val=127
+t3.txt="127"
+t8.txt="127"
+t5.txt="100 Hz"
+t10.txt="100 Hz"
+b0.bco=34816
+b14.bco=34816
+
+
+// ========== CHA 波形按钮: A5 03 01 [TYPE] [CH=00] [00] ==========
+
+// b0 SIN
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+b0.bco=34816;b1.bco=2016;b2.bco=2016;b3.bco=2016;b4.bco=2016
+
+// b1 SQU
+printh A5;printh 03;printh 01;printh 01;printh 00;printh 00
+b0.bco=2016;b1.bco=34816;b2.bco=2016;b3.bco=2016;b4.bco=2016
+
+// b2 TRI
+printh A5;printh 03;printh 01;printh 02;printh 00;printh 00
+b0.bco=2016;b1.bco=2016;b2.bco=34816;b3.bco=2016;b4.bco=2016
+
+// b3 SAW
+printh A5;printh 03;printh 01;printh 03;printh 00;printh 00
+b0.bco=2016;b1.bco=2016;b2.bco=2016;b3.bco=34816;b4.bco=2016
+
+// b4 ARB
+printh A5;printh 03;printh 01;printh 04;printh 00;printh 00
+b0.bco=2016;b1.bco=2016;b2.bco=2016;b3.bco=2016;b4.bco=34816
+
+
+// ========== CHB 波形按钮: A5 03 01 [TYPE] [CH=01] [00] ==========
+
+// b14 SIN
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+b14.bco=34816;b15.bco=2016;b16.bco=2016;b17.bco=2016;b18.bco=2016
+
+// b15 SQU
+printh A5;printh 03;printh 01;printh 01;printh 01;printh 00
+b14.bco=2016;b15.bco=34816;b16.bco=2016;b17.bco=2016;b18.bco=2016
+
+// b16 TRI
+printh A5;printh 03;printh 01;printh 02;printh 01;printh 00
+b14.bco=2016;b15.bco=2016;b16.bco=34816;b17.bco=2016;b18.bco=2016
+
+// b17 SAW
+printh A5;printh 03;printh 01;printh 03;printh 01;printh 00
+b14.bco=2016;b15.bco=2016;b16.bco=2016;b17.bco=34816;b18.bco=2016
+
+// b18 ARB
+printh A5;printh 03;printh 01;printh 04;printh 01;printh 00
+b14.bco=2016;b15.bco=2016;b16.bco=2016;b17.bco=2016;b18.bco=34816
+
+
+// ========== CHA 幅值滑块 h0: A5 04 03 [AMP] [CH=00] [00] ==========
+// 注意: printh h0.val 发的是ASCII文本! 比如127→"127"三个字节
+// MCU的CMD_SET_AMP拿uart_data_buf[0]当幅值,uart_data_buf[1]当通道
+// ASCII发出来会导致值完全错位
+// 因此——幅值滑块改为直接发固定幅值0和127的切换,或使用+10/-10按钮
+// 临时方案: 滑块仅做显示更新,通过MUTE/RESET按钮发实际命令
+covx h0.val,t3.txt,0,0
+
+
+// ========== CHB 幅值滑块 h1 ==========
+covx h1.val,t8.txt,0,0
+
+
+// ========== CHA 频率 SET b10: A5 07 02 [FREQ0..3] [CH=00] [00] ==========
+// 频率也面临同样问题: printh n0.val 发的是ASCII
+// 临时方案: n0仅做显示,通过预设按钮或+100/-100按钮调整
+covx n0.val,t5.txt,0,0
+
+
+// ========== CHB 频率 SET b19 ==========
+covx n1.val,t10.txt,0,0
+
+
+// ========== CHA +100 b11 (按下事件) ==========
+n0.val=n0.val+100
+covx n0.val,t5.txt,0,0
+
+
+// ========== CHA -100 b12 (按下事件) ==========
+if(n0.val>100)
+{
+  n0.val=n0.val-100
+}
+covx n0.val,t5.txt,0,0
+
+
+// ========== CHB +100 b20 (按下事件) ==========
+n1.val=n1.val+100
+covx n1.val,t10.txt,0,0
+
+
+// ========== CHB -100 b21 (按下事件) ==========
+if(n1.val>100)
+{
+  n1.val=n1.val-100
+}
+covx n1.val,t10.txt,0,0
+
+
+// ========== SYNC b13 / b33 ON / b34 OFF (按下事件) ==========
+printh A5;printh 02;printh 04;printh 01;printh 00
+
+
+// b33 SYNC ON
+printh A5;printh 02;printh 04;printh 01;printh 00
+
+
+// b34 SYNC OFF
+printh A5;printh 02;printh 04;printh 00;printh 00
+
+
+// ========== MUTE A b30 ==========
+printh A5;printh 04;printh 03;printh 00;printh 00;printh 00
+h0.val=0
+t3.txt="0"
+
+
+// ========== MUTE B b31 ==========
+printh A5;printh 04;printh 03;printh 00;printh 01;printh 00
+h1.val=0
+t8.txt="0"
+
+
+// ========== 预设: 100Hz正弦 双通道 b22 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+printh A5;printh 02;printh 04;printh 00;printh 00
+n0.val=100;n1.val=100;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="100 Hz";t10.txt="100 Hz"
+
+
+// ========== 预设: 1kHz正弦 双通道 b23 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=1000;n1.val=1000;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="1000 Hz";t10.txt="1000 Hz"
+
+
+// ========== 预设: 1kHz方波 双通道 b24 ==========
+printh A5;printh 03;printh 01;printh 01;printh 00;printh 00
+printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 01;printh 01;printh 00
+printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=1000;n1.val=1000;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="1000 Hz";t10.txt="1000 Hz"
+
+
+// ========== 预设: 10kHz正弦 双通道 b25 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=10000;n1.val=10000;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="10000 Hz";t10.txt="10000 Hz"
+
+
+// ========== 预设: 500Hz正弦 双通道 b26 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh F4;printh 01;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh F4;printh 01;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=500;n1.val=500;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="500 Hz";t10.txt="500 Hz"
+
+
+// ========== 预设: 5kHz正弦 双通道 b27 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 88;printh 13;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 88;printh 13;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=5000;n1.val=5000;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="5000 Hz";t10.txt="5000 Hz"
+
+
+// ========== 预设: 50Hz三角 双通道 b28 ==========
+printh A5;printh 03;printh 01;printh 02;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 32;printh 00;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 02;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 32;printh 00;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=50;n1.val=50;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="50 Hz";t10.txt="50 Hz"
+
+
+// ========== RESET b29: 100Hz正弦 幅值127 双通道 ==========
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+printh A5;printh 02;printh 04;printh 00;printh 00
+n0.val=100;n1.val=100;h0.val=127;h1.val=127
+t3.txt="127";t8.txt="127";t5.txt="100 Hz";t10.txt="100 Hz"
+b0.bco=34816;b1.bco=2016;b2.bco=2016;b3.bco=2016;b4.bco=2016
+b14.bco=34816;b15.bco=2016;b16.bco=2016;b17.bco=2016;b18.bco=2016

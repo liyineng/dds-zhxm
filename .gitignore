@@ -1,0 +1,46 @@
+# Vivado
+*.jou
+*.log
+*.str
+*.backup.jou
+*.backup.log
+.vivado/
+Nexus4/
+*.xpr
+*.data/
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.gen/
+*.srcs/*/bd/*/ip/
+*.srcs/*/bd/*/ipshared/
+*.srcs/*/bd/*/hdl/
+*.srcs/*/bd/*/synth/
+*.srcs/*/bd/*/sim/
+*.srcs/*/bd/*/ui/
+*.srcs/*/bd/*/*.bd
+*.srcs/*/bd/*/*.bmm
+*.srcs/*/bd/*/*.bxml
+*.srcs/*/bd/*/*_ooc.xdc
+*.srcs/constrs_1/
+
+# SDK
+*.sdk/.metadata/
+*.sdk/*/Debug/
+*.sdk/*/Release/
+*.sdk/webtalk/
+
+# BSP build artifacts
+*.o
+*.a
+Makefile
+lib*.a
+
+# General
+*.tmp
+*.swp
+*.bak
+.DS_Store
+Thumbs.db
