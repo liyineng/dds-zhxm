@@ -84,7 +84,7 @@
 
 #define CHA_CMD     0xC000
 
-#define CHB_CMD     0x4000
+#define CHB_CMD     0x0000
 
 
 
@@ -613,13 +613,17 @@ void UART_Handler(void)
 
                 uart_data_buf[uart_data_idx] = rx_byte;
 
-                uart_calc_chk ^= rx_byte;
-
                 uart_data_idx++;
 
                 uart_len--;
 
-                if(uart_len == 0) uart_state = UART_ST_WAIT_CHK;
+                if(uart_len == 0) {
+
+                    uart_apply_command();
+
+                    uart_state = UART_ST_IDLE;
+
+                }
 
                 break;
 
