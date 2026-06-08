@@ -123,8 +123,6 @@
 
 #define UART_SYNC        0xA5
 
-#define UART_SYNC_TXT    0xA6
-
 
 
 #define UART_ST_IDLE       0
@@ -136,14 +134,6 @@
 #define UART_ST_WAIT_DATA  3
 
 #define UART_ST_WAIT_CHK   4
-
-#define UART_ST_TXT_CMD    5
-
-#define UART_ST_TXT_DATA   6
-
-#define UART_ST_TXT_CH     7
-
-#define UART_ST_TXT_CHK    8
 
 
 
@@ -290,12 +280,6 @@ volatile u8 uart_data_buf[256];
 volatile u8 uart_chksum = 0;
 
 volatile u8 uart_calc_chk = 0;
-
-volatile u8 uart_txt_cmd = 0;
-
-volatile u8 uart_txt_idx = 0;
-
-volatile u32 uart_txt_val = 0;
 
 
 
@@ -581,10 +565,6 @@ void UART_Handler(void)
 
                     uart_len = 0;
 
-                } else if(rx_byte == UART_SYNC_TXT) {
-
-                    uart_state = UART_ST_TXT_CMD;
-
                 }
 
                 break;
@@ -648,56 +628,6 @@ void UART_Handler(void)
                 uart_chksum = rx_byte;
 
                 uart_apply_command();
-
-                uart_state = UART_ST_IDLE;
-
-                break;
-
-            case UART_ST_TXT_CMD:
-
-                uart_txt_cmd = rx_byte;
-
-                uart_txt_val = 0;
-
-                uart_txt_idx = 0;
-
-                uart_state = UART_ST_TXT_DATA;
-
-                break;
-
-            case UART_ST_TXT_DATA:
-
-                if(rx_byte == 0xFF) {
-
-                    uart_state = UART_ST_TXT_CH;
-
-                } else if(rx_byte >= '0' && rx_byte <= '9' && uart_txt_idx < 7) {
-
-                    uart_txt_val = (uart_txt_val << 3) + (uart_txt_val << 1) + (u32)(rx_byte - '0');
-
-                    uart_txt_idx++;
-
-                }
-
-                break;
-
-            case UART_ST_TXT_CH:
-
-                uart_data_buf[0] = rx_byte;
-
-                uart_state = UART_ST_TXT_CHK;
-
-                break;
-
-            case UART_ST_TXT_CHK:
-
-                if(uart_txt_cmd == 0x10) {
-
-                    if(uart_data_buf[0] == 0) amplitude_a = (u8)uart_txt_val;
-
-                    else if(uart_data_buf[0] == 1) amplitude_b = (u8)uart_txt_val;
-
-                }
 
                 uart_state = UART_ST_IDLE;
 
