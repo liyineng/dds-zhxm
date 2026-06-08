@@ -1,7 +1,8 @@
 // =======================================================
 // DDS Waveform Generator - TJC8048X550_011C
-// 二进制(SYNC=A5): 波形/预设/同步/MUTE/RESET
-// 文本(SYNC=A6): 幅值滑块 + 频率 (ASCII + FF终止, CMD=10=幅值 11=频率)
+// 二进制(SYNC=A5): 波形/预设/同步/MUTE/RESET/频率预设
+// 文本(SYNC=A6): 幅值滑块 (CMD=10, ASCII+FF终止)
+// 注意: 频率只能通过预设按钮设置,滑块/输入框仅做显示
 // =======================================================
 
 
@@ -22,7 +23,7 @@ b0.bco=34816
 b14.bco=34816
 
 
-// ========== CHA 波形按钮 (二进制: A5 03 01 TYPE 00 00) ==========
+// ====== CHA 波形按钮 (二进制: A5 03 01 TYPE 00 00) ======
 
 // b0 SIN
 printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
@@ -45,7 +46,7 @@ printh A5;printh 03;printh 01;printh 04;printh 00;printh 00
 b0.bco=2016;b1.bco=2016;b2.bco=2016;b3.bco=2016;b4.bco=34816
 
 
-// ========== CHB 波形按钮 (二进制: A5 03 01 TYPE 01 00) ==========
+// ====== CHB 波形按钮 (二进制: A5 03 01 TYPE 01 00) ======
 
 // b14 SIN
 printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
@@ -68,8 +69,8 @@ printh A5;printh 03;printh 01;printh 04;printh 01;printh 00
 b14.bco=2016;b15.bco=2016;b16.bco=2016;b17.bco=2016;b18.bco=34816
 
 
-// ========== CHA 幅值滑块 h0 (文本: A6 10 [ASCII] FF CH 00) ==========
-// printh h0.val 发的是ASCII文本, MCU用0xFF做终止符
+// ====== CHA 幅值滑块 h0 (文本协议: A6 10 [ASCII] FF CH 00) ======
+// printh h0.val 发ASCII文本, MCU逐字节解析
 covx h0.val,t3.txt,0,0
 printh A6
 printh 10
@@ -79,7 +80,7 @@ printh 00
 printh 00
 
 
-// ========== CHB 幅值滑块 h1 (文本协议) ==========
+// ====== CHB 幅值滑块 h1 (文本协议) ======
 covx h1.val,t8.txt,0,0
 printh A6
 printh 10
@@ -89,79 +90,45 @@ printh 01
 printh 00
 
 
-// ========== CHA 频率 SET b10 (文本: A6 11 [ASCII] FF CH 00) ==========
+// ====== 频率区域 - 仅显示, 不发送 ======
+
+// n0/n1: 数字输入(仅显示)
+// b10/b19: SET FREQ按钮(仅更新显示)
+// b11/b12: CHA +/-100 (仅更新显示)
+// b20/b21: CHB +/-100 (仅更新显示)
+
+// CHA SET FREQ b10 (按下事件)
 covx n0.val,t5.txt,0,0
-printh A6
-printh 11
-printh n0.val
-printh FF
-printh 00
-printh 00
 
-
-// ========== CHB 频率 SET b19 (文本协议) ==========
+// CHB SET FREQ b19 (按下事件)
 covx n1.val,t10.txt,0,0
-printh A6
-printh 11
-printh n1.val
-printh FF
-printh 01
-printh 00
 
-
-// ========== CHA 频率 +100 b11 (按下事件) ==========
+// CHA +100 b11 (按下事件)
 n0.val=n0.val+100
 covx n0.val,t5.txt,0,0
-printh A6
-printh 11
-printh n0.val
-printh FF
-printh 00
-printh 00
 
-
-// ========== CHA 频率 -100 b12 (按下事件) ==========
+// CHA -100 b12 (按下事件)
 if(n0.val>100)
 {
   n0.val=n0.val-100
 }
 covx n0.val,t5.txt,0,0
-printh A6
-printh 11
-printh n0.val
-printh FF
-printh 00
-printh 00
 
-
-// ========== CHB 频率 +100 b20 (按下事件) ==========
+// CHB +100 b20 (按下事件)
 n1.val=n1.val+100
 covx n1.val,t10.txt,0,0
-printh A6
-printh 11
-printh n1.val
-printh FF
-printh 01
-printh 00
 
-
-// ========== CHB 频率 -100 b21 (按下事件) ==========
+// CHB -100 b21 (按下事件)
 if(n1.val>100)
 {
   n1.val=n1.val-100
 }
 covx n1.val,t10.txt,0,0
-printh A6
-printh 11
-printh n1.val
-printh FF
-printh 01
-printh 00
 
 
-// ========== 同步 (二进制: A5 02 04 VAL 00) ==========
+// ====== 同步 (二进制: A5 02 04 VAL 00) ======
 
-// b13 同步 ON
+// b13 同步按钮
 printh A5;printh 02;printh 04;printh 01;printh 00
 
 // b33 SYNC ON
@@ -171,19 +138,19 @@ printh A5;printh 02;printh 04;printh 01;printh 00
 printh A5;printh 02;printh 04;printh 00;printh 00
 
 
-// ========== MUTE A b30 (二进制: A5 04 03 00 00 00) ==========
+// ====== MUTE A b30 (二进制: A5 04 03 00 00 00) ======
 printh A5;printh 04;printh 03;printh 00;printh 00;printh 00
 h0.val=0
 t3.txt="0"
 
 
-// ========== MUTE B b31 (二进制) ==========
+// ====== MUTE B b31 (二进制) ======
 printh A5;printh 04;printh 03;printh 00;printh 01;printh 00
 h1.val=0
 t8.txt="0"
 
 
-// ========== RESET b32: 100Hz正弦 幅127 ==========
+// ====== RESET b32: 100Hz正弦 幅127 双通道 同步关 ======
 printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
 printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
@@ -197,78 +164,71 @@ b0.bco=34816;b1.bco=2016;b2.bco=2016;b3.bco=2016;b4.bco=2016
 b14.bco=34816;b15.bco=2016;b16.bco=2016;b17.bco=2016;b18.bco=2016
 
 
-// ========== 预设: 1kHz正弦 b22 (二进制全包) ==========
+// ====== 预设: 100Hz正弦 b22 ======
+printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 00;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
+printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
+printh A5;printh 07;printh 02;printh 64;printh 00;printh 00;printh 00;printh 01;printh 00
+printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
+n0.val=100;n1.val=100;t5.txt="100 Hz";t10.txt="100 Hz"
+
+
+// ====== 预设: 1kHz正弦 b23 ======
 printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
 printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
 printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=1000;n1.val=1000;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="1000 Hz";t10.txt="1000 Hz"
+n0.val=1000;n1.val=1000;t5.txt="1000 Hz";t10.txt="1000 Hz"
 
 
-// ========== 预设: 1kHz方波 b23 (二进制全包) ==========
+// ====== 预设: 1kHz方波 b24 ======
 printh A5;printh 03;printh 01;printh 01;printh 00;printh 00
 printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 01;printh 01;printh 00
 printh A5;printh 07;printh 02;printh E8;printh 03;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=1000;n1.val=1000;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="1000 Hz";t10.txt="1000 Hz"
+n0.val=1000;n1.val=1000;t5.txt="1000 Hz";t10.txt="1000 Hz"
 
 
-// ========== 预设: 10kHz正弦 b24 (二进制全包) ==========
+// ====== 预设: 10kHz正弦 b25 ======
 printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
 printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
 printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=10000;n1.val=10000;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="10000 Hz";t10.txt="10000 Hz"
+n0.val=10000;n1.val=10000;t5.txt="10000 Hz";t10.txt="10000 Hz"
 
 
-// ========== 预设: 10kHz方波 b25 (二进制全包) ==========
+// ====== 预设: 10kHz方波 b26 ======
 printh A5;printh 03;printh 01;printh 01;printh 00;printh 00
 printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 01;printh 01;printh 00
 printh A5;printh 07;printh 02;printh 10;printh 27;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=10000;n1.val=10000;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="10000 Hz";t10.txt="10000 Hz"
+n0.val=10000;n1.val=10000;t5.txt="10000 Hz";t10.txt="10000 Hz"
 
 
-// ========== 预设: 500Hz正弦 b26 (二进制全包) ==========
+// ====== 预设: 500Hz正弦 b27 ======
 printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
 printh A5;printh 07;printh 02;printh F4;printh 01;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
 printh A5;printh 07;printh 02;printh F4;printh 01;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=500;n1.val=500;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="500 Hz";t10.txt="500 Hz"
+n0.val=500;n1.val=500;t5.txt="500 Hz";t10.txt="500 Hz"
 
 
-// ========== 预设: 5kHz正弦 b27 (二进制全包) ==========
-printh A5;printh 03;printh 01;printh 00;printh 00;printh 00
-printh A5;printh 07;printh 02;printh 88;printh 13;printh 00;printh 00;printh 00;printh 00
-printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
-printh A5;printh 03;printh 01;printh 00;printh 01;printh 00
-printh A5;printh 07;printh 02;printh 88;printh 13;printh 00;printh 00;printh 01;printh 00
-printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=5000;n1.val=5000;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="5000 Hz";t10.txt="5000 Hz"
-
-
-// ========== 预设: 50Hz三角 b28 (二进制全包) ==========
+// ====== 预设: 50Hz三角 b28 ======
 printh A5;printh 03;printh 01;printh 02;printh 00;printh 00
 printh A5;printh 07;printh 02;printh 32;printh 00;printh 00;printh 00;printh 00;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 00;printh 00
 printh A5;printh 03;printh 01;printh 02;printh 01;printh 00
 printh A5;printh 07;printh 02;printh 32;printh 00;printh 00;printh 00;printh 01;printh 00
 printh A5;printh 04;printh 03;printh 7F;printh 01;printh 00
-n0.val=50;n1.val=50;h0.val=127;h1.val=127
-t3.txt="127";t8.txt="127";t5.txt="50 Hz";t10.txt="50 Hz"
+n0.val=50;n1.val=50;t5.txt="50 Hz";t10.txt="50 Hz"

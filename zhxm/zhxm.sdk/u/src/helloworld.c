@@ -293,8 +293,6 @@ volatile u8 uart_calc_chk = 0;
 
 volatile u8 uart_txt_cmd = 0;
 
-volatile u8 uart_txt_buf[8];
-
 volatile u8 uart_txt_idx = 0;
 
 volatile u32 uart_txt_val = 0;
@@ -659,6 +657,8 @@ void UART_Handler(void)
 
                 uart_txt_cmd = rx_byte;
 
+                uart_txt_val = 0;
+
                 uart_txt_idx = 0;
 
                 uart_state = UART_ST_TXT_DATA;
@@ -671,9 +671,9 @@ void UART_Handler(void)
 
                     uart_state = UART_ST_TXT_CH;
 
-                } else if(uart_txt_idx < 7) {
+                } else if(rx_byte >= '0' && rx_byte <= '9' && uart_txt_idx < 7) {
 
-                    uart_txt_buf[uart_txt_idx] = rx_byte;
+                    uart_txt_val = (uart_txt_val << 3) + (uart_txt_val << 1) + (u32)(rx_byte - '0');
 
                     uart_txt_idx++;
 
@@ -691,41 +691,11 @@ void UART_Handler(void)
 
             case UART_ST_TXT_CHK:
 
-                uart_txt_val = 0;
-
-                uart_data_idx = 0;
-
-                while(uart_data_idx < uart_txt_idx) {
-
-                    if(uart_txt_buf[uart_data_idx] >= '0' && uart_txt_buf[uart_data_idx] <= '9')
-
-                        uart_txt_val = uart_txt_val * 10 + (uart_txt_buf[uart_data_idx] - '0');
-
-                    uart_data_idx++;
-
-                }
-
                 if(uart_txt_cmd == 0x10) {
 
                     if(uart_data_buf[0] == 0) amplitude_a = (u8)uart_txt_val;
 
                     else if(uart_data_buf[0] == 1) amplitude_b = (u8)uart_txt_val;
-
-                } else if(uart_txt_cmd == 0x11) {
-
-                    if(uart_data_buf[0] == 0) {
-
-                        freq_hz_a = uart_txt_val;
-
-                        update_hardware_timer(freq_hz_a);
-
-                    } else if(uart_data_buf[0] == 1) {
-
-                        freq_hz_b = uart_txt_val;
-
-                        if(!sync_mode) update_hardware_timer(freq_hz_b);
-
-                    }
 
                 }
 
