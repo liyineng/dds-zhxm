@@ -1,5 +1,6 @@
 ﻿// =======================================================
 // DDS Waveform Generator - TJC8048X550_011C
+// printh发固定头 + prints发送raw二进制变量值
 // MCU零改动
 // =======================================================
 
@@ -101,16 +102,91 @@ b17.bco=2016
 b18.bco=34816
 
 
-// ====== 同步 (按下事件) ======
-// b13/b33/b34共用:
-// ON:  printh A5 02 04 01 00
-// OFF: printh A5 02 04 00 00
+// ====== CHA 幅值滑块 h0 (值改变事件) ======
+// printh发头, prints发1字节raw幅值
+printh A5 04 03
+prints h0.val,1
+printh 00 00
+covx h0.val,t3.txt,0,0
+
+
+// ====== CHB 幅值滑块 h1 (值改变事件) ======
+printh A5 04 03
+prints h1.val,1
+printh 01 00
+covx h1.val,t8.txt,0,0
+
+
+// ====== CHA 频率 SET b10 (按下事件) ======
+// printh发头, prints发4字节小端频率
+printh A5 07 02
+prints n0.val,4
+printh 00 00
+covx n0.val,t5.txt,0,0
+
+
+// ====== CHB 频率 SET b19 (按下事件) ======
+printh A5 07 02
+prints n1.val,4
+printh 01 00
+covx n1.val,t10.txt,0,0
+
+
+// ====== CHA 频率 +100 b11 (按下事件) ======
+n0.val=n0.val+100
+printh A5 07 02
+prints n0.val,4
+printh 00 00
+covx n0.val,t5.txt,0,0
+
+
+// ====== CHA 频率 -100 b12 (按下事件) ======
+if(n0.val>100)
+{
+n0.val=n0.val-100
+}
+printh A5 07 02
+prints n0.val,4
+printh 00 00
+covx n0.val,t5.txt,0,0
+
+
+// ====== CHB 频率 +100 b20 (按下事件) ======
+n1.val=n1.val+100
+printh A5 07 02
+prints n1.val,4
+printh 01 00
+covx n1.val,t10.txt,0,0
+
+
+// ====== CHB 频率 -100 b21 (按下事件) ======
+if(n1.val>100)
+{
+n1.val=n1.val-100
+}
+printh A5 07 02
+prints n1.val,4
+printh 01 00
+covx n1.val,t10.txt,0,0
+
+
+// ====== 同步 b13 (按下事件) ======
+printh A5 02 04 01 00
+
+
+// ====== SYNC ON b33 (按下事件) ======
+printh A5 02 04 01 00
+
+
+// ====== SYNC OFF b34 (按下事件) ======
+printh A5 02 04 00 00
 
 
 // ====== MUTE A b30 (按下事件) ======
 printh A5 04 03 00 00 00
 h0.val=0
 t3.txt="0"
+
 
 // ====== MUTE B b31 (按下事件) ======
 printh A5 04 03 00 01 00
@@ -146,9 +222,7 @@ b17.bco=2016
 b18.bco=2016
 
 
-// ====== 预设按钮 (按下事件, 二进制全包) ======
-
-// b22 100Hz正弦
+// ====== 预设: 100Hz正弦 b22 (按下事件) ======
 printh A5 03 01 00 00 00
 printh A5 07 02 64 00 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -160,7 +234,8 @@ n1.val=100
 t5.txt="100 Hz"
 t10.txt="100 Hz"
 
-// b23 1kHz正弦
+
+// ====== 预设: 1kHz正弦 b23 (按下事件) ======
 printh A5 03 01 00 00 00
 printh A5 07 02 E8 03 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -172,7 +247,8 @@ n1.val=1000
 t5.txt="1000 Hz"
 t10.txt="1000 Hz"
 
-// b24 1kHz方波
+
+// ====== 预设: 1kHz方波 b24 (按下事件) ======
 printh A5 03 01 01 00 00
 printh A5 07 02 E8 03 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -184,7 +260,8 @@ n1.val=1000
 t5.txt="1000 Hz"
 t10.txt="1000 Hz"
 
-// b25 10kHz正弦
+
+// ====== 预设: 10kHz正弦 b25 (按下事件) ======
 printh A5 03 01 00 00 00
 printh A5 07 02 10 27 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -196,7 +273,8 @@ n1.val=10000
 t5.txt="10000 Hz"
 t10.txt="10000 Hz"
 
-// b26 10kHz方波
+
+// ====== 预设: 10kHz方波 b26 (按下事件) ======
 printh A5 03 01 01 00 00
 printh A5 07 02 10 27 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -208,7 +286,8 @@ n1.val=10000
 t5.txt="10000 Hz"
 t10.txt="10000 Hz"
 
-// b27 500Hz正弦
+
+// ====== 预设: 500Hz正弦 b27 (按下事件) ======
 printh A5 03 01 00 00 00
 printh A5 07 02 F4 01 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -220,7 +299,8 @@ n1.val=500
 t5.txt="500 Hz"
 t10.txt="500 Hz"
 
-// b28 50Hz三角
+
+// ====== 预设: 50Hz三角 b28 (按下事件) ======
 printh A5 03 01 02 00 00
 printh A5 07 02 32 00 00 00 00 00
 printh A5 04 03 7F 00 00
@@ -231,1202 +311,3 @@ n0.val=50
 n1.val=50
 t5.txt="50 Hz"
 t10.txt="50 Hz"
-
-
-// ====== 频率区域 (仅显示) ======
-// n0/n1: 仅显示数值
-// b10 SET CHA FREQ: covx n0.val,t5.txt,0,0
-// b19 SET CHB FREQ: covx n1.val,t10.txt,0,0
-// b11 CHA +100: n0.val=n0.val+100;covx n0.val,t5.txt,0,0
-// b12 CHA -100: if(n0.val>100){n0.val=n0.val-100}covx n0.val,t5.txt,0,0
-// b20 CHB +100: n1.val=n1.val+100;covx n1.val,t10.txt,0,0
-// b21 CHB -100: if(n1.val>100){n1.val=n1.val-100}covx n1.val,t10.txt,0,0
-
-
-// ==================== 滑块代码 ====================
-// 以下分别粘贴到对应滑块的值改变事件
-
-// ---------- h0 CHA幅值 (值改变事件) ----------
-if(h0.val==0)
-{
-printh A5 04 03 00 00 00
-}
-if(h0.val==1)
-{
-printh A5 04 03 01 00 00
-}
-if(h0.val==2)
-{
-printh A5 04 03 02 00 00
-}
-if(h0.val==3)
-{
-printh A5 04 03 03 00 00
-}
-if(h0.val==4)
-{
-printh A5 04 03 04 00 00
-}
-if(h0.val==5)
-{
-printh A5 04 03 05 00 00
-}
-if(h0.val==6)
-{
-printh A5 04 03 06 00 00
-}
-if(h0.val==7)
-{
-printh A5 04 03 07 00 00
-}
-if(h0.val==8)
-{
-printh A5 04 03 08 00 00
-}
-if(h0.val==9)
-{
-printh A5 04 03 09 00 00
-}
-if(h0.val==10)
-{
-printh A5 04 03 0A 00 00
-}
-if(h0.val==11)
-{
-printh A5 04 03 0B 00 00
-}
-if(h0.val==12)
-{
-printh A5 04 03 0C 00 00
-}
-if(h0.val==13)
-{
-printh A5 04 03 0D 00 00
-}
-if(h0.val==14)
-{
-printh A5 04 03 0E 00 00
-}
-if(h0.val==15)
-{
-printh A5 04 03 0F 00 00
-}
-if(h0.val==16)
-{
-printh A5 04 03 10 00 00
-}
-if(h0.val==17)
-{
-printh A5 04 03 11 00 00
-}
-if(h0.val==18)
-{
-printh A5 04 03 12 00 00
-}
-if(h0.val==19)
-{
-printh A5 04 03 13 00 00
-}
-if(h0.val==20)
-{
-printh A5 04 03 14 00 00
-}
-if(h0.val==21)
-{
-printh A5 04 03 15 00 00
-}
-if(h0.val==22)
-{
-printh A5 04 03 16 00 00
-}
-if(h0.val==23)
-{
-printh A5 04 03 17 00 00
-}
-if(h0.val==24)
-{
-printh A5 04 03 18 00 00
-}
-if(h0.val==25)
-{
-printh A5 04 03 19 00 00
-}
-if(h0.val==26)
-{
-printh A5 04 03 1A 00 00
-}
-if(h0.val==27)
-{
-printh A5 04 03 1B 00 00
-}
-if(h0.val==28)
-{
-printh A5 04 03 1C 00 00
-}
-if(h0.val==29)
-{
-printh A5 04 03 1D 00 00
-}
-if(h0.val==30)
-{
-printh A5 04 03 1E 00 00
-}
-if(h0.val==31)
-{
-printh A5 04 03 1F 00 00
-}
-if(h0.val==32)
-{
-printh A5 04 03 20 00 00
-}
-if(h0.val==33)
-{
-printh A5 04 03 21 00 00
-}
-if(h0.val==34)
-{
-printh A5 04 03 22 00 00
-}
-if(h0.val==35)
-{
-printh A5 04 03 23 00 00
-}
-if(h0.val==36)
-{
-printh A5 04 03 24 00 00
-}
-if(h0.val==37)
-{
-printh A5 04 03 25 00 00
-}
-if(h0.val==38)
-{
-printh A5 04 03 26 00 00
-}
-if(h0.val==39)
-{
-printh A5 04 03 27 00 00
-}
-if(h0.val==40)
-{
-printh A5 04 03 28 00 00
-}
-if(h0.val==41)
-{
-printh A5 04 03 29 00 00
-}
-if(h0.val==42)
-{
-printh A5 04 03 2A 00 00
-}
-if(h0.val==43)
-{
-printh A5 04 03 2B 00 00
-}
-if(h0.val==44)
-{
-printh A5 04 03 2C 00 00
-}
-if(h0.val==45)
-{
-printh A5 04 03 2D 00 00
-}
-if(h0.val==46)
-{
-printh A5 04 03 2E 00 00
-}
-if(h0.val==47)
-{
-printh A5 04 03 2F 00 00
-}
-if(h0.val==48)
-{
-printh A5 04 03 30 00 00
-}
-if(h0.val==49)
-{
-printh A5 04 03 31 00 00
-}
-if(h0.val==50)
-{
-printh A5 04 03 32 00 00
-}
-if(h0.val==51)
-{
-printh A5 04 03 33 00 00
-}
-if(h0.val==52)
-{
-printh A5 04 03 34 00 00
-}
-if(h0.val==53)
-{
-printh A5 04 03 35 00 00
-}
-if(h0.val==54)
-{
-printh A5 04 03 36 00 00
-}
-if(h0.val==55)
-{
-printh A5 04 03 37 00 00
-}
-if(h0.val==56)
-{
-printh A5 04 03 38 00 00
-}
-if(h0.val==57)
-{
-printh A5 04 03 39 00 00
-}
-if(h0.val==58)
-{
-printh A5 04 03 3A 00 00
-}
-if(h0.val==59)
-{
-printh A5 04 03 3B 00 00
-}
-if(h0.val==60)
-{
-printh A5 04 03 3C 00 00
-}
-if(h0.val==61)
-{
-printh A5 04 03 3D 00 00
-}
-if(h0.val==62)
-{
-printh A5 04 03 3E 00 00
-}
-if(h0.val==63)
-{
-printh A5 04 03 3F 00 00
-}
-if(h0.val==64)
-{
-printh A5 04 03 40 00 00
-}
-if(h0.val==65)
-{
-printh A5 04 03 41 00 00
-}
-if(h0.val==66)
-{
-printh A5 04 03 42 00 00
-}
-if(h0.val==67)
-{
-printh A5 04 03 43 00 00
-}
-if(h0.val==68)
-{
-printh A5 04 03 44 00 00
-}
-if(h0.val==69)
-{
-printh A5 04 03 45 00 00
-}
-if(h0.val==70)
-{
-printh A5 04 03 46 00 00
-}
-if(h0.val==71)
-{
-printh A5 04 03 47 00 00
-}
-if(h0.val==72)
-{
-printh A5 04 03 48 00 00
-}
-if(h0.val==73)
-{
-printh A5 04 03 49 00 00
-}
-if(h0.val==74)
-{
-printh A5 04 03 4A 00 00
-}
-if(h0.val==75)
-{
-printh A5 04 03 4B 00 00
-}
-if(h0.val==76)
-{
-printh A5 04 03 4C 00 00
-}
-if(h0.val==77)
-{
-printh A5 04 03 4D 00 00
-}
-if(h0.val==78)
-{
-printh A5 04 03 4E 00 00
-}
-if(h0.val==79)
-{
-printh A5 04 03 4F 00 00
-}
-if(h0.val==80)
-{
-printh A5 04 03 50 00 00
-}
-if(h0.val==81)
-{
-printh A5 04 03 51 00 00
-}
-if(h0.val==82)
-{
-printh A5 04 03 52 00 00
-}
-if(h0.val==83)
-{
-printh A5 04 03 53 00 00
-}
-if(h0.val==84)
-{
-printh A5 04 03 54 00 00
-}
-if(h0.val==85)
-{
-printh A5 04 03 55 00 00
-}
-if(h0.val==86)
-{
-printh A5 04 03 56 00 00
-}
-if(h0.val==87)
-{
-printh A5 04 03 57 00 00
-}
-if(h0.val==88)
-{
-printh A5 04 03 58 00 00
-}
-if(h0.val==89)
-{
-printh A5 04 03 59 00 00
-}
-if(h0.val==90)
-{
-printh A5 04 03 5A 00 00
-}
-if(h0.val==91)
-{
-printh A5 04 03 5B 00 00
-}
-if(h0.val==92)
-{
-printh A5 04 03 5C 00 00
-}
-if(h0.val==93)
-{
-printh A5 04 03 5D 00 00
-}
-if(h0.val==94)
-{
-printh A5 04 03 5E 00 00
-}
-if(h0.val==95)
-{
-printh A5 04 03 5F 00 00
-}
-if(h0.val==96)
-{
-printh A5 04 03 60 00 00
-}
-if(h0.val==97)
-{
-printh A5 04 03 61 00 00
-}
-if(h0.val==98)
-{
-printh A5 04 03 62 00 00
-}
-if(h0.val==99)
-{
-printh A5 04 03 63 00 00
-}
-if(h0.val==100)
-{
-printh A5 04 03 64 00 00
-}
-if(h0.val==101)
-{
-printh A5 04 03 65 00 00
-}
-if(h0.val==102)
-{
-printh A5 04 03 66 00 00
-}
-if(h0.val==103)
-{
-printh A5 04 03 67 00 00
-}
-if(h0.val==104)
-{
-printh A5 04 03 68 00 00
-}
-if(h0.val==105)
-{
-printh A5 04 03 69 00 00
-}
-if(h0.val==106)
-{
-printh A5 04 03 6A 00 00
-}
-if(h0.val==107)
-{
-printh A5 04 03 6B 00 00
-}
-if(h0.val==108)
-{
-printh A5 04 03 6C 00 00
-}
-if(h0.val==109)
-{
-printh A5 04 03 6D 00 00
-}
-if(h0.val==110)
-{
-printh A5 04 03 6E 00 00
-}
-if(h0.val==111)
-{
-printh A5 04 03 6F 00 00
-}
-if(h0.val==112)
-{
-printh A5 04 03 70 00 00
-}
-if(h0.val==113)
-{
-printh A5 04 03 71 00 00
-}
-if(h0.val==114)
-{
-printh A5 04 03 72 00 00
-}
-if(h0.val==115)
-{
-printh A5 04 03 73 00 00
-}
-if(h0.val==116)
-{
-printh A5 04 03 74 00 00
-}
-if(h0.val==117)
-{
-printh A5 04 03 75 00 00
-}
-if(h0.val==118)
-{
-printh A5 04 03 76 00 00
-}
-if(h0.val==119)
-{
-printh A5 04 03 77 00 00
-}
-if(h0.val==120)
-{
-printh A5 04 03 78 00 00
-}
-if(h0.val==121)
-{
-printh A5 04 03 79 00 00
-}
-if(h0.val==122)
-{
-printh A5 04 03 7A 00 00
-}
-if(h0.val==123)
-{
-printh A5 04 03 7B 00 00
-}
-if(h0.val==124)
-{
-printh A5 04 03 7C 00 00
-}
-if(h0.val==125)
-{
-printh A5 04 03 7D 00 00
-}
-if(h0.val==126)
-{
-printh A5 04 03 7E 00 00
-}
-if(h0.val==127)
-{
-printh A5 04 03 7F 00 00
-}
-covx h0.val,t3.txt,0,0
-
-
-
-// ---------- h1 CHB幅值 (值改变事件) ----------
-if(h1.val==0)
-{
-printh A5 04 03 00 01 00
-}
-if(h1.val==1)
-{
-printh A5 04 03 01 01 00
-}
-if(h1.val==2)
-{
-printh A5 04 03 02 01 00
-}
-if(h1.val==3)
-{
-printh A5 04 03 03 01 00
-}
-if(h1.val==4)
-{
-printh A5 04 03 04 01 00
-}
-if(h1.val==5)
-{
-printh A5 04 03 05 01 00
-}
-if(h1.val==6)
-{
-printh A5 04 03 06 01 00
-}
-if(h1.val==7)
-{
-printh A5 04 03 07 01 00
-}
-if(h1.val==8)
-{
-printh A5 04 03 08 01 00
-}
-if(h1.val==9)
-{
-printh A5 04 03 09 01 00
-}
-if(h1.val==10)
-{
-printh A5 04 03 0A 01 00
-}
-if(h1.val==11)
-{
-printh A5 04 03 0B 01 00
-}
-if(h1.val==12)
-{
-printh A5 04 03 0C 01 00
-}
-if(h1.val==13)
-{
-printh A5 04 03 0D 01 00
-}
-if(h1.val==14)
-{
-printh A5 04 03 0E 01 00
-}
-if(h1.val==15)
-{
-printh A5 04 03 0F 01 00
-}
-if(h1.val==16)
-{
-printh A5 04 03 10 01 00
-}
-if(h1.val==17)
-{
-printh A5 04 03 11 01 00
-}
-if(h1.val==18)
-{
-printh A5 04 03 12 01 00
-}
-if(h1.val==19)
-{
-printh A5 04 03 13 01 00
-}
-if(h1.val==20)
-{
-printh A5 04 03 14 01 00
-}
-if(h1.val==21)
-{
-printh A5 04 03 15 01 00
-}
-if(h1.val==22)
-{
-printh A5 04 03 16 01 00
-}
-if(h1.val==23)
-{
-printh A5 04 03 17 01 00
-}
-if(h1.val==24)
-{
-printh A5 04 03 18 01 00
-}
-if(h1.val==25)
-{
-printh A5 04 03 19 01 00
-}
-if(h1.val==26)
-{
-printh A5 04 03 1A 01 00
-}
-if(h1.val==27)
-{
-printh A5 04 03 1B 01 00
-}
-if(h1.val==28)
-{
-printh A5 04 03 1C 01 00
-}
-if(h1.val==29)
-{
-printh A5 04 03 1D 01 00
-}
-if(h1.val==30)
-{
-printh A5 04 03 1E 01 00
-}
-if(h1.val==31)
-{
-printh A5 04 03 1F 01 00
-}
-if(h1.val==32)
-{
-printh A5 04 03 20 01 00
-}
-if(h1.val==33)
-{
-printh A5 04 03 21 01 00
-}
-if(h1.val==34)
-{
-printh A5 04 03 22 01 00
-}
-if(h1.val==35)
-{
-printh A5 04 03 23 01 00
-}
-if(h1.val==36)
-{
-printh A5 04 03 24 01 00
-}
-if(h1.val==37)
-{
-printh A5 04 03 25 01 00
-}
-if(h1.val==38)
-{
-printh A5 04 03 26 01 00
-}
-if(h1.val==39)
-{
-printh A5 04 03 27 01 00
-}
-if(h1.val==40)
-{
-printh A5 04 03 28 01 00
-}
-if(h1.val==41)
-{
-printh A5 04 03 29 01 00
-}
-if(h1.val==42)
-{
-printh A5 04 03 2A 01 00
-}
-if(h1.val==43)
-{
-printh A5 04 03 2B 01 00
-}
-if(h1.val==44)
-{
-printh A5 04 03 2C 01 00
-}
-if(h1.val==45)
-{
-printh A5 04 03 2D 01 00
-}
-if(h1.val==46)
-{
-printh A5 04 03 2E 01 00
-}
-if(h1.val==47)
-{
-printh A5 04 03 2F 01 00
-}
-if(h1.val==48)
-{
-printh A5 04 03 30 01 00
-}
-if(h1.val==49)
-{
-printh A5 04 03 31 01 00
-}
-if(h1.val==50)
-{
-printh A5 04 03 32 01 00
-}
-if(h1.val==51)
-{
-printh A5 04 03 33 01 00
-}
-if(h1.val==52)
-{
-printh A5 04 03 34 01 00
-}
-if(h1.val==53)
-{
-printh A5 04 03 35 01 00
-}
-if(h1.val==54)
-{
-printh A5 04 03 36 01 00
-}
-if(h1.val==55)
-{
-printh A5 04 03 37 01 00
-}
-if(h1.val==56)
-{
-printh A5 04 03 38 01 00
-}
-if(h1.val==57)
-{
-printh A5 04 03 39 01 00
-}
-if(h1.val==58)
-{
-printh A5 04 03 3A 01 00
-}
-if(h1.val==59)
-{
-printh A5 04 03 3B 01 00
-}
-if(h1.val==60)
-{
-printh A5 04 03 3C 01 00
-}
-if(h1.val==61)
-{
-printh A5 04 03 3D 01 00
-}
-if(h1.val==62)
-{
-printh A5 04 03 3E 01 00
-}
-if(h1.val==63)
-{
-printh A5 04 03 3F 01 00
-}
-if(h1.val==64)
-{
-printh A5 04 03 40 01 00
-}
-if(h1.val==65)
-{
-printh A5 04 03 41 01 00
-}
-if(h1.val==66)
-{
-printh A5 04 03 42 01 00
-}
-if(h1.val==67)
-{
-printh A5 04 03 43 01 00
-}
-if(h1.val==68)
-{
-printh A5 04 03 44 01 00
-}
-if(h1.val==69)
-{
-printh A5 04 03 45 01 00
-}
-if(h1.val==70)
-{
-printh A5 04 03 46 01 00
-}
-if(h1.val==71)
-{
-printh A5 04 03 47 01 00
-}
-if(h1.val==72)
-{
-printh A5 04 03 48 01 00
-}
-if(h1.val==73)
-{
-printh A5 04 03 49 01 00
-}
-if(h1.val==74)
-{
-printh A5 04 03 4A 01 00
-}
-if(h1.val==75)
-{
-printh A5 04 03 4B 01 00
-}
-if(h1.val==76)
-{
-printh A5 04 03 4C 01 00
-}
-if(h1.val==77)
-{
-printh A5 04 03 4D 01 00
-}
-if(h1.val==78)
-{
-printh A5 04 03 4E 01 00
-}
-if(h1.val==79)
-{
-printh A5 04 03 4F 01 00
-}
-if(h1.val==80)
-{
-printh A5 04 03 50 01 00
-}
-if(h1.val==81)
-{
-printh A5 04 03 51 01 00
-}
-if(h1.val==82)
-{
-printh A5 04 03 52 01 00
-}
-if(h1.val==83)
-{
-printh A5 04 03 53 01 00
-}
-if(h1.val==84)
-{
-printh A5 04 03 54 01 00
-}
-if(h1.val==85)
-{
-printh A5 04 03 55 01 00
-}
-if(h1.val==86)
-{
-printh A5 04 03 56 01 00
-}
-if(h1.val==87)
-{
-printh A5 04 03 57 01 00
-}
-if(h1.val==88)
-{
-printh A5 04 03 58 01 00
-}
-if(h1.val==89)
-{
-printh A5 04 03 59 01 00
-}
-if(h1.val==90)
-{
-printh A5 04 03 5A 01 00
-}
-if(h1.val==91)
-{
-printh A5 04 03 5B 01 00
-}
-if(h1.val==92)
-{
-printh A5 04 03 5C 01 00
-}
-if(h1.val==93)
-{
-printh A5 04 03 5D 01 00
-}
-if(h1.val==94)
-{
-printh A5 04 03 5E 01 00
-}
-if(h1.val==95)
-{
-printh A5 04 03 5F 01 00
-}
-if(h1.val==96)
-{
-printh A5 04 03 60 01 00
-}
-if(h1.val==97)
-{
-printh A5 04 03 61 01 00
-}
-if(h1.val==98)
-{
-printh A5 04 03 62 01 00
-}
-if(h1.val==99)
-{
-printh A5 04 03 63 01 00
-}
-if(h1.val==100)
-{
-printh A5 04 03 64 01 00
-}
-if(h1.val==101)
-{
-printh A5 04 03 65 01 00
-}
-if(h1.val==102)
-{
-printh A5 04 03 66 01 00
-}
-if(h1.val==103)
-{
-printh A5 04 03 67 01 00
-}
-if(h1.val==104)
-{
-printh A5 04 03 68 01 00
-}
-if(h1.val==105)
-{
-printh A5 04 03 69 01 00
-}
-if(h1.val==106)
-{
-printh A5 04 03 6A 01 00
-}
-if(h1.val==107)
-{
-printh A5 04 03 6B 01 00
-}
-if(h1.val==108)
-{
-printh A5 04 03 6C 01 00
-}
-if(h1.val==109)
-{
-printh A5 04 03 6D 01 00
-}
-if(h1.val==110)
-{
-printh A5 04 03 6E 01 00
-}
-if(h1.val==111)
-{
-printh A5 04 03 6F 01 00
-}
-if(h1.val==112)
-{
-printh A5 04 03 70 01 00
-}
-if(h1.val==113)
-{
-printh A5 04 03 71 01 00
-}
-if(h1.val==114)
-{
-printh A5 04 03 72 01 00
-}
-if(h1.val==115)
-{
-printh A5 04 03 73 01 00
-}
-if(h1.val==116)
-{
-printh A5 04 03 74 01 00
-}
-if(h1.val==117)
-{
-printh A5 04 03 75 01 00
-}
-if(h1.val==118)
-{
-printh A5 04 03 76 01 00
-}
-if(h1.val==119)
-{
-printh A5 04 03 77 01 00
-}
-if(h1.val==120)
-{
-printh A5 04 03 78 01 00
-}
-if(h1.val==121)
-{
-printh A5 04 03 79 01 00
-}
-if(h1.val==122)
-{
-printh A5 04 03 7A 01 00
-}
-if(h1.val==123)
-{
-printh A5 04 03 7B 01 00
-}
-if(h1.val==124)
-{
-printh A5 04 03 7C 01 00
-}
-if(h1.val==125)
-{
-printh A5 04 03 7D 01 00
-}
-if(h1.val==126)
-{
-printh A5 04 03 7E 01 00
-}
-if(h1.val==127)
-{
-printh A5 04 03 7F 01 00
-}
-covx h1.val,t8.txt,0,0
-// ==================== 频率滑块 ====================
-// 先在TJC里添加滑块 h2 (CHA频率) 和 h3 (CHB频率)
-// maxval设为13, val默认6(100Hz)
-// 然后在页面初始化事件里加: h2.val=6;h3.val=6
-
-// ---------- h2 CHA频率 (值改变事件) ----------
-if(h2.val==0)
-{
-printh A5 07 02 01 00 00 00 00 00
-}
-if(h2.val==1)
-{
-printh A5 07 02 02 00 00 00 00 00
-}
-if(h2.val==2)
-{
-printh A5 07 02 05 00 00 00 00 00
-}
-if(h2.val==3)
-{
-printh A5 07 02 0A 00 00 00 00 00
-}
-if(h2.val==4)
-{
-printh A5 07 02 14 00 00 00 00 00
-}
-if(h2.val==5)
-{
-printh A5 07 02 32 00 00 00 00 00
-}
-if(h2.val==6)
-{
-printh A5 07 02 64 00 00 00 00 00
-}
-if(h2.val==7)
-{
-printh A5 07 02 C8 00 00 00 00 00
-}
-if(h2.val==8)
-{
-printh A5 07 02 F4 01 00 00 00 00
-}
-if(h2.val==9)
-{
-printh A5 07 02 E8 03 00 00 00 00
-}
-if(h2.val==10)
-{
-printh A5 07 02 D0 07 00 00 00 00
-}
-if(h2.val==11)
-{
-printh A5 07 02 88 13 00 00 00 00
-}
-if(h2.val==12)
-{
-printh A5 07 02 10 27 00 00 00 00
-}
-if(h2.val==13)
-{
-printh A5 07 02 20 4E 00 00 00 00
-}
-
-// ---------- h3 CHB频率 (值改变事件) ----------
-if(h3.val==0)
-{
-printh A5 07 02 01 00 00 00 01 00
-}
-if(h3.val==1)
-{
-printh A5 07 02 02 00 00 00 01 00
-}
-if(h3.val==2)
-{
-printh A5 07 02 05 00 00 00 01 00
-}
-if(h3.val==3)
-{
-printh A5 07 02 0A 00 00 00 01 00
-}
-if(h3.val==4)
-{
-printh A5 07 02 14 00 00 00 01 00
-}
-if(h3.val==5)
-{
-printh A5 07 02 32 00 00 00 01 00
-}
-if(h3.val==6)
-{
-printh A5 07 02 64 00 00 00 01 00
-}
-if(h3.val==7)
-{
-printh A5 07 02 C8 00 00 00 01 00
-}
-if(h3.val==8)
-{
-printh A5 07 02 F4 01 00 00 01 00
-}
-if(h3.val==9)
-{
-printh A5 07 02 E8 03 00 00 01 00
-}
-if(h3.val==10)
-{
-printh A5 07 02 D0 07 00 00 01 00
-}
-if(h3.val==11)
-{
-printh A5 07 02 88 13 00 00 01 00
-}
-if(h3.val==12)
-{
-printh A5 07 02 10 27 00 00 01 00
-}
-if(h3.val==13)
-{
-printh A5 07 02 20 4E 00 00 01 00
-}
-
-// ====== 频率显示更新(可选, 贴到h2/h3事件末尾或单独做) ======
-// h2事件末尾加:if(h2.val==0){t5.txt="1 Hz"}
-if(h2.val==1){t5.txt="2 Hz"}
-if(h2.val==2){t5.txt="5 Hz"}
-if(h2.val==3){t5.txt="10 Hz"}
-if(h2.val==4){t5.txt="20 Hz"}
-if(h2.val==5){t5.txt="50 Hz"}
-if(h2.val==6){t5.txt="100 Hz"}
-if(h2.val==7){t5.txt="200 Hz"}
-if(h2.val==8){t5.txt="500 Hz"}
-if(h2.val==9){t5.txt="1000 Hz"}
-if(h2.val==10){t5.txt="2000 Hz"}
-if(h2.val==11){t5.txt="5000 Hz"}
-if(h2.val==12){t5.txt="10000 Hz"}
-if(h2.val==13){t5.txt="20000 Hz"}
-// h3事件末尾加:if(h3.val==0){t10.txt="1 Hz"}
-if(h3.val==1){t10.txt="2 Hz"}
-if(h3.val==2){t10.txt="5 Hz"}
-if(h3.val==3){t10.txt="10 Hz"}
-if(h3.val==4){t10.txt="20 Hz"}
-if(h3.val==5){t10.txt="50 Hz"}
-if(h3.val==6){t10.txt="100 Hz"}
-if(h3.val==7){t10.txt="200 Hz"}
-if(h3.val==8){t10.txt="500 Hz"}
-if(h3.val==9){t10.txt="1000 Hz"}
-if(h3.val==10){t10.txt="2000 Hz"}
-if(h3.val==11){t10.txt="5000 Hz"}
-if(h3.val==12){t10.txt="10000 Hz"}
-if(h3.val==13){t10.txt="20000 Hz"}
-// 滑块位置对应的频率:
-// 0:1Hz 1:2Hz 2:5Hz 3:10Hz 4:20Hz 5:50Hz 6:100Hz 7:200Hz
-// 8:500Hz 9:1kHz 10:2kHz 11:5kHz 12:10kHz 13:20kHz
