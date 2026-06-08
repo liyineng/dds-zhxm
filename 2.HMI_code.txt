@@ -116,55 +116,37 @@ printh 01
 covx h1.val,t8.txt,0,0
 
 
-// ====== CHA 频率 SET b10 (按下事件) ======
-printh A5 06 02
-prints n0.val,4
-printh 00
+// ====== CHA 频率 SET b10 (按下事件, 仅显示) ======
 covx n0.val,t5.txt,0,0
 
 
-// ====== CHB 频率 SET b19 (按下事件) ======
-printh A5 06 02
-prints n1.val,4
-printh 01
+// ====== CHB 频率 SET b19 (按下事件, 仅显示) ======
 covx n1.val,t10.txt,0,0
 
 
-// ====== CHA +100 b11 (按下事件) ======
+// ====== CHA +100 b11 (按下事件, 仅显示) ======
 n0.val=n0.val+100
-printh A5 06 02
-prints n0.val,4
-printh 00
 covx n0.val,t5.txt,0,0
 
 
-// ====== CHA -100 b12 (按下事件) ======
+// ====== CHA -100 b12 (按下事件, 仅显示) ======
 if(n0.val>100)
 {
 n0.val=n0.val-100
 }
-printh A5 06 02
-prints n0.val,4
-printh 00
 covx n0.val,t5.txt,0,0
 
 
-// ====== CHB +100 b20 (按下事件) ======
+// ====== CHB +100 b20 (按下事件, 仅显示) ======
 n1.val=n1.val+100
-printh A5 06 02
-prints n1.val,4
-printh 01
 covx n1.val,t10.txt,0,0
 
 
-// ====== CHB -100 b21 (按下事件) ======
+// ====== CHB -100 b21 (按下事件, 仅显示) ======
 if(n1.val>100)
 {
 n1.val=n1.val-100
 }
-printh A5 06 02
-prints n1.val,4
-printh 01
 covx n1.val,t10.txt,0,0
 
 
@@ -300,3 +282,128 @@ n0.val=50
 n1.val=50
 t5.txt="50 Hz"
 t10.txt="50 Hz"
+
+// ==================== 频率滑块 (添加到2.HMI_code.txt末尾) ====================
+// 在TJC里添加滑块: h2(CHA频率) h3(CHB频率), maxval=13, val默认6(100Hz)
+// 页面初始化加: h2.val=6;h3.val=6
+
+// ---------- h2 CHA频率 (值改变事件) ----------
+if(h2.val==0)
+{
+printh A5 06 02 01 00 00 00 00
+}
+if(h2.val==1)
+{
+printh A5 06 02 02 00 00 00 00
+}
+if(h2.val==2)
+{
+printh A5 06 02 05 00 00 00 00
+}
+if(h2.val==3)
+{
+printh A5 06 02 0A 00 00 00 00
+}
+if(h2.val==4)
+{
+printh A5 06 02 14 00 00 00 00
+}
+if(h2.val==5)
+{
+printh A5 06 02 32 00 00 00 00
+}
+if(h2.val==6)
+{
+printh A5 06 02 64 00 00 00 00
+}
+if(h2.val==7)
+{
+printh A5 06 02 C8 00 00 00 00
+}
+if(h2.val==8)
+{
+printh A5 06 02 F4 01 00 00 00
+}
+if(h2.val==9)
+{
+printh A5 06 02 E8 03 00 00 00
+}
+if(h2.val==10)
+{
+printh A5 06 02 D0 07 00 00 00
+}
+if(h2.val==11)
+{
+printh A5 06 02 88 13 00 00 00
+}
+if(h2.val==12)
+{
+printh A5 06 02 10 27 00 00 00
+}
+if(h2.val==13)
+{
+printh A5 06 02 20 4E 00 00 00
+}
+
+// ---------- h3 CHB频率 (值改变事件) ----------
+
+if(h3.val==0)
+{
+printh A5 06 02 01 00 00 00 01
+}
+if(h3.val==1)
+{
+printh A5 06 02 02 00 00 00 01
+}
+if(h3.val==2)
+{
+printh A5 06 02 05 00 00 00 01
+}
+if(h3.val==3)
+{
+printh A5 06 02 0A 00 00 00 01
+}
+if(h3.val==4)
+{
+printh A5 06 02 14 00 00 00 01
+}
+if(h3.val==5)
+{
+printh A5 06 02 32 00 00 00 01
+}
+if(h3.val==6)
+{
+printh A5 06 02 64 00 00 00 01
+}
+if(h3.val==7)
+{
+printh A5 06 02 C8 00 00 00 01
+}
+if(h3.val==8)
+{
+printh A5 06 02 F4 01 00 00 01
+}
+if(h3.val==9)
+{
+printh A5 06 02 E8 03 00 00 01
+}
+if(h3.val==10)
+{
+printh A5 06 02 D0 07 00 00 01
+}
+if(h3.val==11)
+{
+printh A5 06 02 88 13 00 00 01
+}
+if(h3.val==12)
+{
+printh A5 06 02 10 27 00 00 01
+}
+if(h3.val==13)
+{
+printh A5 06 02 20 4E 00 00 01
+}
+
+// 滑块位置对应频率:
+// 0:1Hz 1:2Hz 2:5Hz 3:10Hz 4:20Hz 5:50Hz 6:100Hz 7:200Hz
+// 8:500Hz 9:1kHz 10:2kHz 11:5kHz 12:10kHz 13:20kHz
