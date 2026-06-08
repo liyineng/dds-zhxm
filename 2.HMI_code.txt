@@ -1277,3 +1277,156 @@ if(h1.val==127)
 printh A5 04 03 7F 01 00
 }
 covx h1.val,t8.txt,0,0
+// ==================== 频率滑块 ====================
+// 先在TJC里添加滑块 h2 (CHA频率) 和 h3 (CHB频率)
+// maxval设为13, val默认6(100Hz)
+// 然后在页面初始化事件里加: h2.val=6;h3.val=6
+
+// ---------- h2 CHA频率 (值改变事件) ----------
+if(h2.val==0)
+{
+printh A5 07 02 01 00 00 00 00 00
+}
+if(h2.val==1)
+{
+printh A5 07 02 02 00 00 00 00 00
+}
+if(h2.val==2)
+{
+printh A5 07 02 05 00 00 00 00 00
+}
+if(h2.val==3)
+{
+printh A5 07 02 0A 00 00 00 00 00
+}
+if(h2.val==4)
+{
+printh A5 07 02 14 00 00 00 00 00
+}
+if(h2.val==5)
+{
+printh A5 07 02 32 00 00 00 00 00
+}
+if(h2.val==6)
+{
+printh A5 07 02 64 00 00 00 00 00
+}
+if(h2.val==7)
+{
+printh A5 07 02 C8 00 00 00 00 00
+}
+if(h2.val==8)
+{
+printh A5 07 02 F4 01 00 00 00 00
+}
+if(h2.val==9)
+{
+printh A5 07 02 E8 03 00 00 00 00
+}
+if(h2.val==10)
+{
+printh A5 07 02 D0 07 00 00 00 00
+}
+if(h2.val==11)
+{
+printh A5 07 02 88 13 00 00 00 00
+}
+if(h2.val==12)
+{
+printh A5 07 02 10 27 00 00 00 00
+}
+if(h2.val==13)
+{
+printh A5 07 02 20 4E 00 00 00 00
+}
+
+// ---------- h3 CHB频率 (值改变事件) ----------
+if(h3.val==0)
+{
+printh A5 07 02 01 00 00 00 01 00
+}
+if(h3.val==1)
+{
+printh A5 07 02 02 00 00 00 01 00
+}
+if(h3.val==2)
+{
+printh A5 07 02 05 00 00 00 01 00
+}
+if(h3.val==3)
+{
+printh A5 07 02 0A 00 00 00 01 00
+}
+if(h3.val==4)
+{
+printh A5 07 02 14 00 00 00 01 00
+}
+if(h3.val==5)
+{
+printh A5 07 02 32 00 00 00 01 00
+}
+if(h3.val==6)
+{
+printh A5 07 02 64 00 00 00 01 00
+}
+if(h3.val==7)
+{
+printh A5 07 02 C8 00 00 00 01 00
+}
+if(h3.val==8)
+{
+printh A5 07 02 F4 01 00 00 01 00
+}
+if(h3.val==9)
+{
+printh A5 07 02 E8 03 00 00 01 00
+}
+if(h3.val==10)
+{
+printh A5 07 02 D0 07 00 00 01 00
+}
+if(h3.val==11)
+{
+printh A5 07 02 88 13 00 00 01 00
+}
+if(h3.val==12)
+{
+printh A5 07 02 10 27 00 00 01 00
+}
+if(h3.val==13)
+{
+printh A5 07 02 20 4E 00 00 01 00
+}
+
+// ====== 频率显示更新(可选, 贴到h2/h3事件末尾或单独做) ======
+// h2事件末尾加:if(h2.val==0){t5.txt="1 Hz"}
+if(h2.val==1){t5.txt="2 Hz"}
+if(h2.val==2){t5.txt="5 Hz"}
+if(h2.val==3){t5.txt="10 Hz"}
+if(h2.val==4){t5.txt="20 Hz"}
+if(h2.val==5){t5.txt="50 Hz"}
+if(h2.val==6){t5.txt="100 Hz"}
+if(h2.val==7){t5.txt="200 Hz"}
+if(h2.val==8){t5.txt="500 Hz"}
+if(h2.val==9){t5.txt="1000 Hz"}
+if(h2.val==10){t5.txt="2000 Hz"}
+if(h2.val==11){t5.txt="5000 Hz"}
+if(h2.val==12){t5.txt="10000 Hz"}
+if(h2.val==13){t5.txt="20000 Hz"}
+// h3事件末尾加:if(h3.val==0){t10.txt="1 Hz"}
+if(h3.val==1){t10.txt="2 Hz"}
+if(h3.val==2){t10.txt="5 Hz"}
+if(h3.val==3){t10.txt="10 Hz"}
+if(h3.val==4){t10.txt="20 Hz"}
+if(h3.val==5){t10.txt="50 Hz"}
+if(h3.val==6){t10.txt="100 Hz"}
+if(h3.val==7){t10.txt="200 Hz"}
+if(h3.val==8){t10.txt="500 Hz"}
+if(h3.val==9){t10.txt="1000 Hz"}
+if(h3.val==10){t10.txt="2000 Hz"}
+if(h3.val==11){t10.txt="5000 Hz"}
+if(h3.val==12){t10.txt="10000 Hz"}
+if(h3.val==13){t10.txt="20000 Hz"}
+// 滑块位置对应的频率:
+// 0:1Hz 1:2Hz 2:5Hz 3:10Hz 4:20Hz 5:50Hz 6:100Hz 7:200Hz
+// 8:500Hz 9:1kHz 10:2kHz 11:5kHz 12:10kHz 13:20kHz
