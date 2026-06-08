@@ -248,6 +248,10 @@ volatile u8 amplitude_a = 127;              // 最大幅值改�?27
 
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
+volatile u32 new_freq;
+
+volatile u8 freq_update;
+
 
 
 
@@ -298,7 +302,6 @@ void intc_init(void);
 
 void arb_table_init(void);
 
-void update_hardware_timer(u32 freq_hz);
 
 u32 calc_load_value(u32 freq_hz);
 
@@ -362,27 +365,6 @@ u32 calc_load_value(u32 freq_hz)
 
 
 
-void update_hardware_timer(u32 freq_hz)
-
-{
-
-    u32 load_value = calc_load_value(freq_hz);
-
-    u32 tcsr = Xil_In32(TIMER_BASE + XTC_TCSR_OFFSET);
-
-
-
-    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr & (~(1<<7)));
-
-    Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, load_value);
-
-    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<5));
-
-    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET,
-
-              (tcsr & (1<<3)) | ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
-
-}
 
 
 
@@ -430,7 +412,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
                  | ((u32)data[2] << 16) | ((u32)data[3] << 24);
 
-            freq_hz_a = freq; update_hardware_timer(freq_hz_a);
+            freq_hz_a = freq; new_freq = freq; freq_update = 1;
 
             break;
 
@@ -446,7 +428,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             freq = freq_table[data[0]];
 
-            freq_hz_a = freq; update_hardware_timer(freq_hz_a);
+            freq_hz_a = freq; new_freq = freq; freq_update = 1;
 
             break;
 
@@ -587,6 +569,14 @@ void T0Handler(void)
     if(tcsr & (1<<8))
 
     {
+
+        if(freq_update) {
+
+            freq_update = 0;
+
+            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
+
+        }
 
         u8 raw_val = wave_tables[wave_type_a][table_index_a];
 
