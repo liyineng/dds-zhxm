@@ -361,13 +361,7 @@ u32 calc_load_value(u32 freq_hz)
 
     if(freq_hz > 20000) freq_hz = 20000;
 
-    if(sw & 0x80000000)
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 256);
-
-    else
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 128);
+    timer_cnt = TIMER_CLK_HZ / (freq_hz * SAMPLES_PER_CYCLE);
 
     if(timer_cnt < 2) timer_cnt = 2;
 
@@ -620,31 +614,21 @@ void T0Handler(void)
 
         if(sw & 0x80000000) {
 
-            if(!(sw & 0x40000000)) {
+            u8 rv_a = wave_tables[wave_type_a][table_index_a];
 
-                u8 rv_b = wave_tables[wave_type_b][table_index_a];
+            u8 rv_b = wave_tables[wave_type_b][table_index_a];
 
-                u8 ov_b = (rv_b * amplitude_b) >> 7;
+            u8 ov_a = (rv_a * amplitude_a) >> 7;
 
-                dac_write_fast(BUF_CMD, ov_b);
+            u8 ov_b = (rv_b * amplitude_b) >> 7;
 
-                sw |= 0x40000000;
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
 
-            } else {
+            dac_write_fast(BUF_CMD, ov_b);
 
-                u8 rv_a = wave_tables[wave_type_a][table_index_a];
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
 
-                u8 ov_a = (rv_a * amplitude_a) >> 7;
-
-                dac_write_fast(CHA_CMD, ov_a);
-
-                sw &= ~0x40000000;
-
-                table_index_a++;
-
-                if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
-            }
+            dac_write_fast(CHA_CMD, ov_a);
 
         } else {
 
@@ -654,13 +638,13 @@ void T0Handler(void)
 
             dac_write_fast(CHA_CMD, out_val);
 
-
-
-            table_index_a++;
-
-            if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
         }
+
+
+
+        table_index_a++;
+
+        if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
 
 
 
