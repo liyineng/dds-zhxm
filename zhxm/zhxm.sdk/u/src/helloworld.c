@@ -767,6 +767,10 @@ int main(void)
 
     arb_table_init();
 
+    new_freq   = DEFAULT_FREQ_HZ;
+
+    freq_update = 0;
+
     spi_init();
 
     gpio_init();
