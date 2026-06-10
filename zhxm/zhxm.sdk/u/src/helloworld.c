@@ -82,14 +82,16 @@
 
 
 
-#define CHA_CMD     0xC000
+#define CHA_CMD     0xC000   // D15=1,D12=0: 写CHA+BUFFER更新到CHB
 
+#define CHB_CMD     0x4000   // D15=0,D12=0: 写CHB+BUFFER
 
+#define BUF_CMD     0x5000   // D15=0,D12=1: 仅写BUFFER
 
 
 #define TIMER_CLK_HZ         100000000
 
-#define SAMPLES_PER_CYCLE    128              // 改为128�?
+#define SAMPLES_PER_CYCLE    128              // 改为128�?
 
 #define DEFAULT_FREQ_HZ      300
 
@@ -126,7 +128,7 @@
 
 /************************************************
 
- * 波形查找表（128点，每个值除�?，范�?-127�?
+ * 波形查找表（128点，每个值除�?，范�?-127�?
 
  ************************************************/
 
@@ -233,7 +235,7 @@ const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 500
 
 /************************************************
 
- * 全局状态变�?
+ * 全局状态变�?
 
  ************************************************/
 
@@ -242,8 +244,11 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
+volatile u8 wave_type_b = WAVE_SINE;
 
-volatile u8 amplitude_a = 127;              // 最大幅值改�?27
+volatile u8 amplitude_a = 127;
+
+volatile u8 amplitude_b = 127;
 
 
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
@@ -341,7 +346,7 @@ void dac_write_fast(u16 cmd, u8 value)
 
 /************************************************
 
- * 定时器频率计算（向上计数模式�?
+ * 定时器频率计算（向上计数模式�?
 
  ************************************************/
 
@@ -370,7 +375,7 @@ u32 calc_load_value(u32 freq_hz)
 
 /************************************************
 
- * UART 驱动与命令解�?
+ * UART 驱动与命令解�?
 
   ************************************************/
 
@@ -394,6 +399,8 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
+    u8 ch   = (cmd_ch >> 3) & 0x01;   // bit[3]: 0=CHA, 1=CHB
+
     u32 freq;
 
     switch(func)
@@ -402,7 +409,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_WAVE:
 
-            wave_type_a = data[0]; table_index_a = 0;
+            if(ch == 0) wave_type_a = data[0];
+
+            else        wave_type_b = data[0];
+
+            table_index_a = 0;
 
             break;
 
@@ -418,7 +429,9 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_AMP:
 
-            amplitude_a = data[0];
+            if(ch == 0) amplitude_a = data[0];
+
+            else        amplitude_b = data[0];
 
             break;
 
@@ -504,7 +517,7 @@ void UART_Handler(void)
 
 /************************************************
 
- * GPIO 快速中断（保留调频功能�?
+ * GPIO 快速中断（保留调频功能�?
 
  ************************************************/
 
@@ -556,7 +569,7 @@ void GPIO_Handler(void)
 
 /************************************************
 
- * 定时器快速中断（双通道波形输出�?
+ * 定时器快速中断（双通道波形输出�?
 
  ************************************************/
 
@@ -578,19 +591,21 @@ void T0Handler(void)
 
         }
 
-        u8 raw_val = wave_tables[wave_type_a][table_index_a];
+        u8 raw_val_a = wave_tables[wave_type_a][table_index_a];
 
-        u8 out_val = (raw_val * amplitude_a) >> 7;
+        u8 raw_val_b = wave_tables[wave_type_b][table_index_a];
 
-        dac_write_fast(CHA_CMD, out_val);
+        u8 out_val_a = (raw_val_a * amplitude_a) >> 7;
 
+        u8 out_val_b = (raw_val_b * amplitude_b) >> 7;
 
+        dac_write_fast(BUF_CMD, out_val_b);
+
+        dac_write_fast(CHA_CMD, out_val_a);
 
         table_index_a++;
 
         if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
-
 
         Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<8));
 
@@ -604,7 +619,7 @@ void T0Handler(void)
 
 /************************************************
 
- * 初始化函�?
+ * 初始化函�?
 
  ************************************************/
 
@@ -695,7 +710,7 @@ void intc_init(void)
 
 /************************************************
 
- * 主函�?
+ * 主函�?
 
  ************************************************/
 
