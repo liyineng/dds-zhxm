@@ -741,13 +741,7 @@ int main(void)
 
         dac_write_fast(CHB_CMD, (raw * amplitude_b) >> 7);
 
-        {
-
-            volatile u32 _d;
-
-            for(_d = 0; _d < 5000; _d++);
-
-        }
+        while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
 
         dac_write_fast(CHA_CMD, (raw * amplitude_a) >> 7);
 
