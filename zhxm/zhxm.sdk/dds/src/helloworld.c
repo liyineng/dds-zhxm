@@ -363,10 +363,27 @@ int main(void)
             {
                 u8 rv_a = wave_tables[wave_type_a][table_index_a];
                 u8 rv_b = wave_tables[wave_type_b][table_index_a];
-                u8 ov_a = (rv_a * amplitude_a) >> 7;
-                u8 ov_b = (rv_b * amplitude_b) >> 7;
-                dac_write_fast(BUF_CMD, ov_b);
-                dac_write_fast(CHA_CMD, ov_a);
+                u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
+                u16 tx_a = CHA_CMD | ((u16)(((rv_a * amplitude_a) >> 7)) << 4);
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                Xil_Out32(SPI_BASE + SPIDTR, tx_b);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 10000; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 100; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                Xil_Out32(SPI_BASE + SPIDTR, tx_a);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 10000; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             }
         }
     };
