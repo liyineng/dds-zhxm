@@ -32,12 +32,13 @@
  ************************************************/
 #define GPIO_INTR_ID   XPAR_FABRIC_AXI_GPIO_0_IP2INTC_IRPT_INTR
 #define TIMER_INTR_ID  XPAR_FABRIC_AXI_TIMER_0_INTERRUPT_INTR
-#define UART_INTR_ID   XPAR_FABRIC_AXI_UARTLITE_0_INTERRUPT_INTR
 
 /************************************************
  * DAC Commands
  ************************************************/
 #define CHA_CMD     0xC000
+#define CHB_CMD     0x4000
+#define BUF_CMD     0x5000
 
 /************************************************
  * DDS Parameters
@@ -59,6 +60,7 @@
 #define FCMD_WAVE       0x0
 #define FCMD_FREQ       0x1
 #define FCMD_AMP        0x2
+#define FCMD_SYNC       0x3
 #define FCMD_FREQ_IDX   0x4
 
 /************************************************
@@ -119,7 +121,10 @@ const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 500
  ************************************************/
 volatile u8  table_index_a = 0;
 volatile u8  wave_type_a   = WAVE_SINE;
+volatile u8  wave_type_b   = WAVE_SINE;
 volatile u8  amplitude_a   = 127;
+volatile u8  amplitude_b   = 127;
+volatile u8  sync_mode     = 0;
 volatile u32 freq_hz_a     = DEFAULT_FREQ_HZ;
 volatile u32 new_freq;
 volatile u8  freq_update;
@@ -222,12 +227,20 @@ void uart_poll(void)
 void process_fixed_frame(u8 cmd_ch, u8* data)
 {
     u8 func = (cmd_ch >> 4) & 0x0F;
+    u8 ch   = (cmd_ch >> 3) & 0x01;
     u32 freq;
+
+    if(func == FCMD_SYNC) {
+        sync_mode = (data[0] != 0) ? 1 : 0;
+        return;
+    }
 
     switch(func)
     {
         case FCMD_WAVE:
-            wave_type_a = data[0]; table_index_a = 0;
+            if(ch == 0) wave_type_a = data[0];
+            else        wave_type_b = data[0];
+            table_index_a = 0;
             break;
         case FCMD_FREQ:
             freq = ((u32)data[0]) | ((u32)data[1] << 8)
@@ -235,7 +248,8 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
             freq_hz_a = freq; new_freq = freq; freq_update = 1;
             break;
         case FCMD_AMP:
-            amplitude_a = data[0];
+            if(ch == 0) amplitude_a = data[0];
+            else        amplitude_b = data[0];
             break;
         case FCMD_FREQ_IDX:
             if(data[0] > 13) break;
@@ -257,7 +271,7 @@ void GPIO_Handler(void *CallbackRef)
 }
 
 /************************************************
- * 定时器中断（单通道 CHA 输出）
+ * 定时器中断（双通道波形输出）
  ************************************************/
 void T0Handler(void *CallbackRef)
 {
@@ -268,9 +282,34 @@ void T0Handler(void *CallbackRef)
             freq_update = 0;
             Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
         }
-        u8 raw_val = wave_tables[wave_type_a][table_index_a];
-        u8 out_val = (raw_val * amplitude_a) >> 7;
-        dac_write_fast(CHA_CMD, out_val);
+
+        if(sync_mode) {
+            u8 rv_a = wave_tables[wave_type_a][table_index_a];
+            u8 rv_b = wave_tables[wave_type_b][table_index_a];
+            u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
+            u16 tx_a = CHA_CMD | ((u16)(((rv_a * amplitude_a) >> 7)) << 4);
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+            Xil_Out32(SPI_BASE + SPIDTR, tx_b);
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+            {
+                volatile u32 _d;
+                for(_d = 0; _d < 80; _d++);
+            }
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+            Xil_Out32(SPI_BASE + SPIDTR, tx_a);
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+        } else {
+            u8 raw_val = wave_tables[wave_type_a][table_index_a];
+            u8 out_val = (raw_val * amplitude_a) >> 7;
+            dac_write_fast(CHA_CMD, out_val);
+        }
 
         table_index_a++;
         if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
