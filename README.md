@@ -1,16 +1,58 @@
 # DDS-ZHXM 基于FPGA的DDS信号发生器
 
-基于 Xilinx FPGA + MicroBlaze 处理器实现的直接数字频率合成（DDS）信号发生器，支持多种波形输出和频率/幅值控制。
+基于 Xilinx Zynq-7000 (ARM Cortex-A9) 实现的直接数字频率合成（DDS）信号发生器，支持双通道波形输出和频率/幅值控制。
 
 ## 功能特性
 
 - **多波形输出**：正弦波、方波、三角波、锯齿波、任意波形
-- **频率范围**：1Hz ~ 20kHz（14档预设频率）
+- **频率范围**：1Hz ~ 2kHz（11档预设频率）
 - **幅值控制**：0 ~ 127 级可调（128级）
-- **双通道支持**：CHA / CHB 独立控制
+- **双通道支持**：CHA / CHB
+  - **syncoff**：两通道独立输出（可不同波形/幅值，同频）
+  - **syncon**：两通道完全同步（跟随 CHA 波形/幅值）
 - **UART 通信**：115200 波特率，支持串口指令控制
 - **HMI 显示**：支持串口屏（Nextion）触摸操作
 - **GPIO 按键**：支持物理按键控制
+
+## 硬件平台
+
+- **FPGA**：Xilinx Zynq-7000 (XC7Z020 / XC7Z010)
+- **处理器**：ARM Cortex-A9 (PS, 667MHz)
+- **DAC**：TLV5618 (双路 12 位，SPI 接口，slow mode)
+- **HMI**：Nextion 串口触摸屏
+- **接口**：
+  - UART (AXI UART Lite)：115200 baud
+  - SPI (AXI Quad SPI, 无 FIFO, 手动 CS)：DAC 控制
+  - GPIO (AXI GPIO)：按键输入
+
+## 开发环境
+
+1. **FPGA 设计**：Xilinx Vivado 2018.3+
+2. **软件开发**：Xilinx SDK (Standalone BSP)
+3. **HMI 设计**：Nextion Editor
+
+## 项目结构
+
+```
+dds-zhxm/
+├── README.md
+├── .gitignore
+├── 2.HMI_code.txt          # HMI 串口屏控制代码（按钮事件）
+├── 2.HMI_slider.txt        # HMI 串口屏滑块事件代码
+└── zhxm/
+    ├── zhxm.sdk/
+    │   ├── dds/             # Zynq-7 SDK 应用工程
+    │   │   └── src/
+    │   │       ├── helloworld.c    # 主程序（DDS 核心逻辑）
+    │   │       ├── platform.c      # 平台初始化
+    │   │       ├── platform.h
+    │   │       ├── platform_config.h
+    │   │       └── lscript.ld
+    │   └── dds_bsp/         # 板级支持包
+    │       └── system.mss
+    ├── zhxm.srcs/           # Vivado 源码 / 约束
+    └── zhxm.runs/           # Vivado 综合 / 实现
+```
 
 ## 通信协议
 
@@ -29,93 +71,56 @@ FF [CMD] [D0] [D1] [D2] [D3]
 
 | 功能码 | 功能 | 数据格式 |
 |--------|------|----------|
-| `0x0`  | 设置波形 | D0 = 波形类型 (0=SIN, 1=SQU, 2=TRI, 3=SAW, 4=ARB) |
-| `0x1`  | 设置频率 | D0~D3 = 32位频率值（Hz） |
-| `0x2`  | 设置幅值 | D0 = 幅值 (0~127) |
-| `0x4`  | 按索引设置频率 | D0 = 频率索引 (0~13) |
+| `0x0` | 设置波形 | D0 = 波形类型 (0=SIN, 1=SQU, 2=TRI, 3=SAW, 4=ARB) |
+| `0x1` | 设置频率 | D0~D3 = 32位频率值（Hz，上限 2000） |
+| `0x2` | 设置幅值 | D0 = 幅值 (0~127) |
+| `0x3` | 同步模式 | D0=01 → syncon, D0=00 → syncoff |
+| `0x4` | 按索引设置频率 | D0 = 频率索引 (0~10) |
+
+### 通道选择（bit[3]）
+
+| CMD 字节 | 通道 | 示例 |
+|----------|------|------|
+| `0x00` ~ `0x07` | CHA | `FF 00 00` = CHA 正弦波 |
+| `0x08` ~ `0x0F` | CHB | `FF 08 01` = CHB 方波 |
+| `0x20` ~ `0x27` | CHA | `FF 20 64` = CHA 幅值 100 |
+| `0x28` ~ `0x2F` | CHB | `FF 28 7F` = CHB 幅值 127 |
 
 ### 频率索引对照表
 
-| 索引 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
-|------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|
-| 频率 | 1Hz | 2Hz | 5Hz | 10Hz | 20Hz | 50Hz | 100Hz | 200Hz | 500Hz | 1kHz | 2kHz | 5kHz | 10kHz | 20kHz |
+| 索引 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|------|---|---|---|---|---|---|---|---|---|---|----|
+| 频率 | 1Hz | 2Hz | 5Hz | 10Hz | 20Hz | 50Hz | 100Hz | 200Hz | 500Hz | 1kHz | 2kHz |
 
-## 项目结构
+### 双通道模式
 
-```
-dds-zhxm/
-├── README.md
-├── .gitignore
-├── 2.HMI_code.txt          # HMI 串口屏控制代码（按钮事件）
-├── 2.HMI_slider.txt        # HMI 串口屏滑块事件代码
-└── zhxm/
-    ├── zhxm.sdk/           # Xilinx SDK 工程
-    │   └── u/
-    │       └── src/
-    │           ├── helloworld.c    # 主程序（DDS核心逻辑）
-    │           ├── platform.c      # 平台初始化
-    │           ├── platform.h      # 平台头文件
-    │           ├── platform_config.h
-    │           └── lscript.ld      # MicroBlaze 链接脚本
-    └── zhxm.srcs/
-        └── constrs_1/
-            └── new/
-                └── 1.xdc          # Vivado 约束文件
-```
+| 命令 | 模式 | 行为 |
+|------|------|------|
+| `FF 30 00 00 00 00` | syncoff（默认） | 两通道独立波形/幅值，同频交替输出 |
+| `FF 30 01 00 00 00` | syncon | 两通道完全同步，跟随 CHA 波形/幅值 |
 
-## 硬件平台
-
-- **FPGA**：Xilinx 7 系列（Zynq-7000 或 Artix-7）
-- **处理器**：MicroBlaze 软核
-- **DAC**：SPI 接口 DAC（如 AD5541 / DAC8562 等）
-- **HMI**：Nextion 串口触摸屏
-- **接口**：
-  - UART：115200 baud
-  - SPI：DAC 控制
-  - GPIO：按键输入
-
-## 开发环境
-
-1. **FPGA 设计**：Xilinx Vivado 2018.3+
-2. **软件开发**：Xilinx SDK
-3. **HMI 设计**：Nextion Editor
-
-## 使用说明
-
-### 1. 编译与烧录
-
-1. 使用 Vivado 打开工程，生成 bitstream
-2. 使用 SDK 导出硬件平台，编译 `helloworld.c`
-3. 将 bitstream 和 ELF 烧录到 FPGA
-
-### 2. HMI 屏幕配置
-
-将 `2.HMI_code.txt` 和 `2.HMI_slider.txt` 中的事件代码复制到 Nextion Editor 的对应组件事件中。
-
-### 3. 串口命令示例
-
-通过串口终端（115200,8N1）发送以下命令：
+## 串口命令示例
 
 ```bash
-# 设置正弦波
+# CHA 正弦波 + 1kHz + 最大幅值
 FF 00 00 00 00 00
-
-# 设置方波
-FF 00 01 00 00 00
-
-# 设置 1kHz 频率（索引方式）
 FF 40 09 00 00 00
+FF 20 7F 00 00 00
 
-# 设置幅值为 100
-FF 20 64 00 00 00
+# CHB 三角波 + 500Hz + 幅值 64
+FF 08 02 00 00 00
+FF 10 F4 01 00 00
+FF 28 40 00 00 00
+
+# 开启双通道同步模式（两通道跟 CHA 走）
+FF 30 01 00 00 00
+
+# 关闭同步，恢复独立两通道
+FF 30 00 00 00 00
 
 # 静音（幅值归零）
 FF 20 00 00 00 00
-
-# 复位（正弦波 + 100Hz + 最大幅值）
-FF 00 00 00 00 00
-FF 40 06 00 00 00
-FF 20 7F 00 00 00
+FF 28 00 00 00 00
 ```
 
 ## HMI 界面说明
@@ -139,7 +144,20 @@ FF 20 7F 00 00 00
 |------|------|------|
 | h0 | 0~127 | CHA 幅值 |
 | h1 | 0~127 | CHB 幅值 |
-| h2 | 0~13 | 频率索引 |
+| h2 | 0~10 | 频率索引 |
+
+## 已知限制
+
+- 最大频率 2kHz（受 SPI 带宽限制，syncon 模式需 3 笔 SPI 写/采样点）
+- 高频时波形精度下降（主循环采样丢失）
+- TLV5618 需 slow mode，双通道需 CHB 数据写两次
+
+## 版本
+
+| Tag | 平台 | 说明 |
+|-----|------|------|
+| `v1.0-zynq7-single-cha` | Zynq-7 | 单通道 CHA 基线 |
+| `v2.0-zynq7-dual-cha` | Zynq-7 | 双通道正式版 |
 
 ## 许可证
 
