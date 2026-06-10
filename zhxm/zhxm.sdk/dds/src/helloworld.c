@@ -64,7 +64,7 @@
 #define FCMD_FREQ_IDX   0x4
 
 /************************************************
- * 波形查找表（128点）
+ * 娉㈠舰鏌ユ壘琛紙128鐐癸級
  ************************************************/
 const u8 sine_table[128] = {
     64,67,70,73,76,79,82,85,88,91,93,96,99,101,104,106,
@@ -114,10 +114,10 @@ u8 arbitrary_table[128];
 
 const u8* wave_tables[5] = { sine_table, square_table, triangle_table, sawtooth_table, arbitrary_table };
 
-const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000 };
+const u32 freq_table[11] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000 };
 
 /************************************************
- * 全局状态变量
+ * 鍏ㄥ眬鐘舵�佸彉閲�
  ************************************************/
 volatile u8  table_index_a = 0;
 volatile u8  wave_type_a   = WAVE_SINE;
@@ -140,7 +140,7 @@ u32 sw = 1;
 XScuGic GicInstance;
 
 /************************************************
- * 函数声明
+ * 鍑芥暟澹版槑
  ************************************************/
 void T0Handler(void *CallbackRef);
 void GPIO_Handler(void *CallbackRef);
@@ -159,7 +159,7 @@ void arb_table_init(void);
 u32 calc_load_value(u32 freq_hz);
 
 /************************************************
- * SPI / DAC 驱动
+ * SPI / DAC 椹卞姩
  ************************************************/
 void spi_init(void)
 {
@@ -175,20 +175,20 @@ void dac_write_fast(u16 cmd, u8 value)
 }
 
 /************************************************
- * 定时器频率计算（向上计数模式）
+ * 瀹氭椂鍣ㄩ鐜囪绠楋紙鍚戜笂璁℃暟妯″紡锛�
  ************************************************/
 u32 calc_load_value(u32 freq_hz)
 {
     u32 timer_cnt;
     if(freq_hz == 0) freq_hz = 1;
-    if(freq_hz > 20000) freq_hz = 20000;
+    if(freq_hz > 2000) freq_hz = 2000;
     timer_cnt = TIMER_CLK_HZ / (freq_hz * SAMPLES_PER_CYCLE);
     if(timer_cnt < 2) timer_cnt = 2;
     return 0xFFFFFFFF - timer_cnt + 1;
 }
 
 /************************************************
- * UART 驱动与命令解析
+ * UART 椹卞姩涓庡懡浠よВ鏋�
  ************************************************/
 void uart_send_byte(u8 data)
 {
@@ -254,7 +254,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
             else        amplitude_b = data[0];
             break;
         case FCMD_FREQ_IDX:
-            if(data[0] > 13) break;
+            if(data[0] > 10) break;
             freq = freq_table[data[0]];
             freq_hz_a = freq; new_freq = freq; freq_update = 1;
             break;
@@ -263,7 +263,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 }
 
 /************************************************
- * GPIO 中断
+ * GPIO 涓柇
  ************************************************/
 void GPIO_Handler(void *CallbackRef)
 {
@@ -273,7 +273,7 @@ void GPIO_Handler(void *CallbackRef)
 }
 
 /************************************************
- * 定时器中断（双通道波形输出）
+ * 瀹氭椂鍣ㄤ腑鏂紙鍙岄�氶亾娉㈠舰杈撳嚭锛�
  ************************************************/
 void T0Handler(void *CallbackRef)
 {
@@ -294,7 +294,7 @@ void T0Handler(void *CallbackRef)
 }
 
 /************************************************
- * 初始化函数
+ * 鍒濆鍖栧嚱鏁�
  ************************************************/
 void arb_table_init(void)
 {
@@ -347,7 +347,7 @@ void intc_init(void)
 }
 
 /************************************************
- * 主函数
+ * 涓诲嚱鏁�
  ************************************************/
 int main(void)
 {
@@ -366,19 +366,19 @@ int main(void)
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHB_CMD, ov);
-                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
                 { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHB_CMD, ov);
-                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
                 { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHA_CMD, ov);
-                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             } else {
                 if(!(sw & 0x40000000)) {
@@ -386,13 +386,13 @@ int main(void)
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHB_CMD, ov);
-                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    { volatile u32 _d; for(_d=0;_d<200;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
                     { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHB_CMD, ov);
-                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    { volatile u32 _d; for(_d=0;_d<200;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
 
                     sw |= 0x40000000;
@@ -401,7 +401,7 @@ int main(void)
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHA_CMD, ov);
-                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    { volatile u32 _d; for(_d=0;_d<200;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
 
                     sw &= ~0x40000000;
