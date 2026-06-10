@@ -36,9 +36,9 @@
 /************************************************
  * DAC Commands
  ************************************************/
-#define CHA_CMD     0xC000
-#define CHB_CMD     0x4000
-#define BUF_CMD     0x5000
+#define CHA_CMD     0x8000
+#define CHB_CMD     0x0000
+#define BUF_CMD     0x1000
 
 /************************************************
  * DDS Parameters
