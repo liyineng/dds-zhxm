@@ -287,46 +287,7 @@ void T0Handler(void *CallbackRef)
 
         table_index_a++;
         if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
-        u8 idx = (table_index_a > 0) ? (table_index_a - 1) : (SAMPLES_PER_CYCLE - 1);
-
-        if(sync_mode) {
-            u8 ov = (wave_tables[wave_type_a][idx] * amplitude_a) >> 7;
-
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-            dac_write_fast(CHB_CMD, ov);
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-            dac_write_fast(CHB_CMD, ov);
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-            dac_write_fast(CHA_CMD, ov);
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-        } else {
-            if(!(sw & 0x40000000)) {
-                u8 ov = (wave_tables[wave_type_b][idx] * amplitude_b) >> 7;
-
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHB_CMD, ov);
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHB_CMD, ov);
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-                sw |= 0x40000000;
-            } else {
-                u8 ov = (wave_tables[wave_type_a][idx] * amplitude_a) >> 7;
-
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHA_CMD, ov);
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-                sw &= ~0x40000000;
-            }
-        }
+        dac_pending = 1;
 
         Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<8));
     }
@@ -398,6 +359,46 @@ int main(void)
     intc_init();
     while(1){
         uart_poll();
+        if(dac_pending) {
+            dac_pending = 0;
+            if(sync_mode) {
+                u8 ov = (wave_tables[wave_type_a][table_index_a] * amplitude_a) >> 7;
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                dac_write_fast(CHB_CMD, ov);
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                dac_write_fast(CHB_CMD, ov);
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                dac_write_fast(CHA_CMD, ov);
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+            } else {
+                if(!(sw & 0x40000000)) {
+                    u8 ov = (wave_tables[wave_type_b][table_index_a] * amplitude_b) >> 7;
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHB_CMD, ov);
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHB_CMD, ov);
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                    sw |= 0x40000000;
+                } else {
+                    u8 ov = (wave_tables[wave_type_a][table_index_a] * amplitude_a) >> 7;
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHA_CMD, ov);
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                    sw &= ~0x40000000;
+                }
+            }
+        }
     };
     return 0;
 }
