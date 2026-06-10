@@ -125,6 +125,7 @@ volatile u8  wave_type_b   = WAVE_SINE;
 volatile u8  amplitude_a   = 127;
 volatile u8  amplitude_b   = 127;
 volatile u8  sync_mode     = 0;
+volatile u8  dac_pending   = 0;
 volatile u32 freq_hz_a     = DEFAULT_FREQ_HZ;
 volatile u32 new_freq;
 volatile u8  freq_update;
@@ -283,18 +284,9 @@ void T0Handler(void *CallbackRef)
             Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
         }
 
-        if(sync_mode) {
-            u8 raw_val = wave_tables[wave_type_a][table_index_a];
-            u8 out_val = (raw_val * amplitude_a) >> 7;
-            dac_write_fast(CHA_CMD, out_val);
-        } else {
-            u8 raw_val = wave_tables[wave_type_a][table_index_a];
-            u8 out_val = (raw_val * amplitude_a) >> 7;
-            dac_write_fast(CHA_CMD, out_val);
-        }
-
         table_index_a++;
         if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+        dac_pending = 1;
 
         Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<8));
     }
@@ -366,6 +358,36 @@ int main(void)
     intc_init();
     while(1){
         uart_poll();
+        if(dac_pending) {
+            dac_pending = 0;
+            if(sync_mode) {
+                u8 rv_a = wave_tables[wave_type_a][table_index_a];
+                u8 rv_b = wave_tables[wave_type_b][table_index_a];
+                u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
+                u16 tx_a = CHA_CMD | ((u16)(((rv_a * amplitude_a) >> 7)) << 4);
+
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                Xil_Out32(SPI_BASE + SPIDTR, tx_b);
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 1000; _d++);
+                }
+
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                Xil_Out32(SPI_BASE + SPIDTR, tx_a);
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+            } else {
+                u8 raw_val = wave_tables[wave_type_a][table_index_a];
+                u8 out_val = (raw_val * amplitude_a) >> 7;
+                dac_write_fast(CHA_CMD, out_val);
+            }
+        }
     };
     return 0;
 }
