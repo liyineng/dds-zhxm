@@ -253,7 +253,7 @@ volatile u8 amplitude_a = 127;
 
 volatile u8 amplitude_b = 127;
 
-volatile u8 sync_mode  = 0;
+volatile u8 sync_mode;
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
