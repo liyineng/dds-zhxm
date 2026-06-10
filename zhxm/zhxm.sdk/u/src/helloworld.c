@@ -82,13 +82,11 @@
 
 
 
-#define CHA_CMD     0xC000
+#define CHA_CMD     0xC000   // D15=1,D12=0: 写CHA+BUFFER更新到CHB
 
-#define CHB_CMD     0x4000
+#define CHB_CMD     0x4000   // D15=0,D12=0: 写CHB+BUFFER
 
-#define BUF_CMD     0x5000
-
-
+#define BUF_CMD     0x5000   // D15=0,D12=1: 仅写BUFFER
 
 
 #define TIMER_CLK_HZ         100000000
@@ -247,13 +245,13 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
-volatile u8 wave_type_b;
+volatile u8 wave_type_b = WAVE_SINE;
 
 volatile u8 amplitude_a = 127;
 
-volatile u8 amplitude_b;
+volatile u8 amplitude_b = 127;
 
-volatile u8 sync_mode;
+
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
@@ -402,7 +400,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
-    u8 ch   = (cmd_ch >> 3) & 0x01;
+    u8 ch   = (cmd_ch >> 3) & 0x01;   // bit[3]: 0=CHA, 1=CHB
 
     u32 freq;
 
@@ -440,7 +438,13 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_SYNC:
 
-            sync_mode = (data[0] != 0) ? 1 : 0;
+            if(data[0] != 0)
+
+                sw |=  0x80000000;
+
+            else
+
+                sw &= ~0x80000000;
 
             break;
 
@@ -725,11 +729,7 @@ int main(void)
 
 {
 
-    wave_type_b = WAVE_SINE;
-
-    amplitude_b = 127;
-
-    sync_mode   = 0;
+    arb_table_init();
 
     spi_init();
 
