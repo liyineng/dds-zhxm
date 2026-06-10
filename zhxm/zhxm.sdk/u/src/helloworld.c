@@ -120,6 +120,7 @@
 
 #define FCMD_AMP        0x2
 
+#define FCMD_SYNC       0x3
 
 #define FCMD_FREQ_IDX   0x4
 
@@ -250,6 +251,10 @@ volatile u8 amplitude_a = 127;
 
 volatile u8 amplitude_b = 127;
 
+volatile u8 sync_mode  = 0;
+
+volatile u8 sync_phase = 0;
+
 
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
@@ -356,11 +361,15 @@ u32 calc_load_value(u32 freq_hz)
 
     u32 timer_cnt;
 
+    u32 samples;
+
     if(freq_hz == 0) freq_hz = 1;
 
     if(freq_hz > 20000) freq_hz = 20000;
 
-    timer_cnt = TIMER_CLK_HZ / (freq_hz * SAMPLES_PER_CYCLE);
+    samples = sync_mode ? (SAMPLES_PER_CYCLE * 2) : SAMPLES_PER_CYCLE;
+
+    timer_cnt = TIMER_CLK_HZ / (freq_hz * samples);
 
     if(timer_cnt < 2) timer_cnt = 2;
 
@@ -432,6 +441,18 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
             if(ch == 0) amplitude_a = data[0];
 
             else        amplitude_b = data[0];
+
+            break;
+
+        case FCMD_SYNC:
+
+            sync_mode  = (data[0] != 0) ? 1 : 0;
+
+            sync_phase = 0;
+
+            new_freq   = freq_hz_a;
+
+            freq_update = 1;
 
             break;
 
@@ -591,17 +612,49 @@ void T0Handler(void)
 
         }
 
-        u8 raw_val = wave_tables[wave_type_a][table_index_a];
+        if(sync_mode) {
 
-        u8 out_val = (raw_val * amplitude_a) >> 7;
+            if(sync_phase == 0) {
 
-        dac_write_fast(CHA_CMD, out_val);
+                u8 raw_val_b = wave_tables[wave_type_b][table_index_a];
+
+                u8 out_val_b = (raw_val_b * amplitude_b) >> 7;
+
+                dac_write_fast(BUF_CMD, out_val_b);
+
+                sync_phase = 1;
+
+            } else {
+
+                u8 raw_val_a = wave_tables[wave_type_a][table_index_a];
+
+                u8 out_val_a = (raw_val_a * amplitude_a) >> 7;
+
+                dac_write_fast(CHA_CMD, out_val_a);
+
+                sync_phase = 0;
+
+                table_index_a++;
+
+                if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+
+            }
+
+        } else {
+
+            u8 raw_val = wave_tables[wave_type_a][table_index_a];
+
+            u8 out_val = (raw_val * amplitude_a) >> 7;
+
+            dac_write_fast(CHA_CMD, out_val);
 
 
 
-        table_index_a++;
+            table_index_a++;
 
-        if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+            if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+
+        }
 
 
 
