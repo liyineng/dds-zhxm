@@ -591,21 +591,19 @@ void T0Handler(void)
 
         }
 
-        u8 raw_val_a = wave_tables[wave_type_a][table_index_a];
+        u8 raw_val = wave_tables[wave_type_a][table_index_a];
 
-        u8 raw_val_b = wave_tables[wave_type_b][table_index_a];
+        u8 out_val = (raw_val * amplitude_a) >> 7;
 
-        u8 out_val_a = (raw_val_a * amplitude_a) >> 7;
+        dac_write_fast(CHA_CMD, out_val);
 
-        u8 out_val_b = (raw_val_b * amplitude_b) >> 7;
 
-        dac_write_fast(CHB_CMD, out_val_b);
-
-        dac_write_fast(CHA_CMD, out_val_a);
 
         table_index_a++;
 
         if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+
+
 
         Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<8));
 
