@@ -735,6 +735,24 @@ int main(void)
 
     spi_init();
 
+    {
+
+        u8 raw = sine_table[0];
+
+        dac_write_fast(CHB_CMD, (raw * amplitude_b) >> 7);
+
+        {
+
+            volatile u32 _d;
+
+            for(_d = 0; _d < 5000; _d++);
+
+        }
+
+        dac_write_fast(CHA_CMD, (raw * amplitude_a) >> 7);
+
+    }
+
     gpio_init();
 
     uart_init();
