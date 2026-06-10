@@ -138,6 +138,7 @@ XScuGic GicInstance;
  ************************************************/
 void T0Handler(void *CallbackRef);
 void GPIO_Handler(void *CallbackRef);
+void UART_Handler(void *CallbackRef);
 
 void spi_init(void);
 void dac_write_fast(u16 cmd, u8 value);
@@ -297,7 +298,36 @@ void gpio_init(void)
 
 void uart_init(void)
 {
-    Xil_Out8(UART_BASE + UART_CONTROL, 0x03);
+    Xil_Out8(UART_BASE + UART_CONTROL, 0x13);
+}
+
+void UART_Handler(void *CallbackRef)
+{
+    u8 rx_byte;
+    while(Xil_In8(UART_BASE + UART_STATUS) & (1<<0))
+    {
+        u32 status = Xil_In8(UART_BASE + UART_STATUS);
+        rx_byte = Xil_In8(UART_BASE + UART_RX_FIFO);
+        if(status & ((1<<5) | (1<<6))) {
+            uart_got_sync = 0;
+            uart_idx = 0;
+            continue;
+        }
+        if(!uart_got_sync) {
+            if(rx_byte == FRAME_SYNC) {
+                uart_got_sync = 1;
+                uart_idx = 0;
+            }
+        } else {
+            uart_frame[uart_idx] = rx_byte;
+            uart_idx++;
+            if(uart_idx >= 5) {
+                process_fixed_frame(uart_frame[0], &uart_frame[1]);
+                uart_got_sync = 0;
+                uart_idx = 0;
+            }
+        }
+    }
 }
 
 void timer_init(void)
@@ -325,9 +355,12 @@ void intc_init(void)
         (Xil_ExceptionHandler)GPIO_Handler, NULL);
     XScuGic_Connect(&GicInstance, TIMER_INTR_ID,
         (Xil_ExceptionHandler)T0Handler, NULL);
+    XScuGic_Connect(&GicInstance, UART_INTR_ID,
+        (Xil_ExceptionHandler)UART_Handler, NULL);
 
     XScuGic_Enable(&GicInstance, GPIO_INTR_ID);
     XScuGic_Enable(&GicInstance, TIMER_INTR_ID);
+    XScuGic_Enable(&GicInstance, UART_INTR_ID);
 
     Xil_ExceptionEnable();
 }
@@ -344,7 +377,6 @@ int main(void)
     timer_init();
     intc_init();
     while(1){
-        uart_poll();
     };
     return 0;
 }
