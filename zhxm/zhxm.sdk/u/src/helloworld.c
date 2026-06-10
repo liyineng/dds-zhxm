@@ -599,7 +599,7 @@ void T0Handler(void)
 
         u8 out_val_b = (raw_val_b * amplitude_b) >> 7;
 
-        dac_write_fast(BUF_CMD, out_val_b);
+        dac_write_fast(CHB_CMD, out_val_b);
 
         dac_write_fast(CHA_CMD, out_val_a);
 
