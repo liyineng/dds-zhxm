@@ -233,6 +233,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     if(func == FCMD_SYNC) {
         sync_mode = (data[0] != 0) ? 1 : 0;
+        sw &= ~0x40000000;
         return;
     }
 
@@ -361,52 +362,50 @@ int main(void)
         if(dac_pending) {
             dac_pending = 0;
             if(sync_mode) {
-                u8 rv_a = wave_tables[wave_type_a][table_index_a];
-                u8 rv_b = wave_tables[wave_type_b][table_index_a];
-                u8 ov_a = (rv_a * amplitude_a) >> 7;
-                u8 ov_b = (rv_b * amplitude_b) >> 7;
+                u8 ov = (wave_tables[wave_type_a][table_index_a] * amplitude_a) >> 7;
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHB_CMD, ov_b);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 2000; _d++);
-                }
+                dac_write_fast(CHB_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 200; _d++);
-                }
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHB_CMD, ov_b);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 2000; _d++);
-                }
+                dac_write_fast(CHB_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 200; _d++);
-                }
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHA_CMD, ov_a);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 2000; _d++);
-                }
+                dac_write_fast(CHA_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             } else {
-                u8 raw_val = wave_tables[wave_type_a][table_index_a];
-                u8 out_val = (raw_val * amplitude_a) >> 7;
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(CHA_CMD, out_val);
-                {
-                    volatile u32 _d;
-                    for(_d = 0; _d < 2000; _d++);
+                if(!(sw & 0x40000000)) {
+                    u8 ov = (wave_tables[wave_type_b][table_index_a] * amplitude_b) >> 7;
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHB_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                    { volatile u32 _d; for(_d=0;_d<200;_d++); }
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHB_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                    sw |= 0x40000000;
+                } else {
+                    u8 ov = (wave_tables[wave_type_a][table_index_a] * amplitude_a) >> 7;
+
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                    dac_write_fast(CHA_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
+                    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                    sw &= ~0x40000000;
                 }
-                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             }
         }
     };
