@@ -284,27 +284,9 @@ void T0Handler(void *CallbackRef)
         }
 
         if(sync_mode) {
-            u8 rv_a = wave_tables[wave_type_a][table_index_a];
-            u8 rv_b = wave_tables[wave_type_b][table_index_a];
-            u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
-            u16 tx_a = CHA_CMD | ((u16)(((rv_a * amplitude_a) >> 7)) << 4);
-
-            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-            Xil_Out32(SPI_BASE + SPIDTR, tx_b);
-            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-
-            {
-                volatile u32 _d;
-                for(_d = 0; _d < 80; _d++);
-            }
-
-            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-            Xil_Out32(SPI_BASE + SPIDTR, tx_a);
-            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
-            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+            u8 raw_val = wave_tables[wave_type_a][table_index_a];
+            u8 out_val = (raw_val * amplitude_a) >> 7;
+            dac_write_fast(CHA_CMD, out_val);
         } else {
             u8 raw_val = wave_tables[wave_type_a][table_index_a];
             u8 out_val = (raw_val * amplitude_a) >> 7;
