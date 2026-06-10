@@ -367,7 +367,7 @@ int main(void)
                 u8 ov_b = (rv_b * amplitude_b) >> 7;
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-                dac_write_fast(0x5000, ov_b);
+                dac_write_fast(CHB_CMD, ov_b);
                 {
                     volatile u32 _d;
                     for(_d = 0; _d < 2000; _d++);
@@ -375,8 +375,21 @@ int main(void)
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
                 {
                     volatile u32 _d;
-                    for(_d = 0; _d < 5000; _d++);
+                    for(_d = 0; _d < 200; _d++);
                 }
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+                dac_write_fast(CHB_CMD, ov_b);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 2000; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 200; _d++);
+                }
+
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHA_CMD, ov_a);
                 {
