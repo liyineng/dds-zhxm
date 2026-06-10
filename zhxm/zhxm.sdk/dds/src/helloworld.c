@@ -366,14 +366,19 @@ int main(void)
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHB_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHB_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHA_CMD, ov);
+                { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             } else {
                 if(!(sw & 0x40000000)) {
@@ -381,10 +386,13 @@ int main(void)
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHB_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                    { volatile u32 _d; for(_d=0;_d<200;_d++); }
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHB_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
 
                     sw |= 0x40000000;
@@ -393,6 +401,7 @@ int main(void)
 
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                     dac_write_fast(CHA_CMD, ov);
+                    { volatile u32 _d; for(_d=0;_d<2000;_d++); }
                     Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
 
                     sw &= ~0x40000000;
