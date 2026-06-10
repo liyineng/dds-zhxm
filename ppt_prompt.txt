@@ -1,30 +1,388 @@
 # DDS-ZHXM 项目答辩 PPT 生成提示词
 
-你是一位 FPGA 嵌入式系统专家。请根据以下项目信息，生成一份面向本科/硕士毕业答辩的 PPT 文稿大纲（15-20页），语言为中文。
+你是一位 FPGA 嵌入式系统专家，正在指导一名学生完成本科毕业设计答辩。请根据以下详细项目信息，生成一份面向本科毕业答辩的 PPT 文稿（20-25页），每页包含要点 + 配图建议。语言为中文，技术描述准确。
 
-## 项目名称
-基于 FPGA 的 DDS 双通道信号发生器（DDS-ZHXM）
+---
 
-## 项目概述
-- 平台：Xilinx Zynq-7000（ARM Cortex-A9 @667MHz + FPGA 逻辑）
-- DAC：TLV5618 双路 12 位电压输出 DAC，SPI 接口
-- 功能：直接数字频率合成（DDS），支持正弦/方波/三角/锯齿/任意波形
-- 频率范围：1Hz ~ 2kHz（11 档预设 + 自定义）
-- 幅值范围：0~127 级
-- 双通道模式：独立输出（syncoff）/ 完全同步（syncon）
-- 通信：UART 115200bps，6 字节固定帧协议
-- HMI：Nextion 串口触摸屏 + GPIO 物理按键
+## 一、项目基本信息
 
-## 技术亮点
-1. **DDS 原理**：128 点波形查找表 + 向上计数定时器 + 相位累加器
-2. **TLV5618 驱动**：手动 CS 翻转、slow mode、双通道 BUFFER 同步机制
-3. **ARM + FPGA 异构架构**：Zynq-7 PS 运行 C 裸机程序，PL 提供 AXI 外设
-4. **中断驱动架构**：Timer ISR（GIC）+ UART 轮询 + GPIO 中断
-5. **双通道同步策略**：CHB_CMD×2 + CHA_CMD 三步写入实现两通道同时更新
-6. **通信协议设计**：固定 6 字节帧、通道位路由、功能码解析
+- **项目名称**：基于 FPGA 的双通道 DDS 信号发生器
+- **英文名称**：Dual-Channel DDS Signal Generator Based on FPGA
+- **核心芯片**：Xilinx Zynq-7000 (XC7Z020)
+- **处理器**：ARM Cortex-A9 双核 @667MHz（使用单核，Standalone 裸机）
+- **DAC 型号**：TLV5618（TI 公司，双路 12 位电压输出，SPI 接口）
+- **开发工具**：Vivado 2018.3 + Xilinx SDK
+- **编程语言**：C（裸机程序，寄存器级驱动，不使用 Xilinx 外设驱动库）
+- **波形类型**：正弦波、方波、三角波、锯齿波、任意波形（128 点查找表）
+- **频率范围**：1Hz ~ 2kHz（11 档索引 + 32 位直接频率值）
+- **幅值范围**：0 ~ 127（8 位，12 位 DAC 数据映射到高 8 位）
+- **通信方式**：UART 115200bps，6 字节固定帧 + 帧同步头 0xFF
+- **人机交互**：Nextion 串口触摸屏（HMI）+ GPIO 物理按键
 
-## 要求
-- 每页 3-5 个要点，配图建议
-- 包含：封面、目录、研究背景、项目目标、系统架构、硬件设计、DDS 原理、DAC 驱动、通信协议、软件开发、双通道实现、测试结果、问题与解决、总结展望
-- 测试结果部分需包括波形截图描述、频率精度分析、已知限制说明
-- 问题与解决部分重点描述：SPI 无 FIFO 的总线异常、MicroBlaze 的 .data 段限制、从 MicroBlaze 迁移到 Zynq-7 的过程
+---
+
+## 二、硬件平台详细参数
+
+### 2.1 Zynq-7000 系统框图（配图建议：Vivado Block Design 截图）
+- PS（Processing System）：ARM Cortex-A9 @667MHz，DDR3 内存，UART，GIC 中断控制器
+- PL（Programmable Logic）：通过 AXI4-Lite 总线挂载以下外设
+
+### 2.2 AXI 外设基地址表
+| 外设 | IP 核 | 基地址 | 中断号 (GIC SPI) |
+|------|-------|--------|------------------|
+| GPIO | AXI GPIO | 0x41200000 | 61 |
+| 定时器 | AXI Timer | 0x42800000 | 62 |
+| SPI | AXI Quad SPI | 0x41E00000 | 无中断 |
+| UART | AXI UART Lite | 0x42C00000 | 63（轮询模式未使用） |
+
+### 2.3 SPI 配置参数
+- FIFO 深度：0（无 FIFO，数据直接写入移位寄存器）
+- 模式：手动 CS 控制（SPICR bit7=1）
+- 时序：CPOL=1, CPHA=0（SCLK 空闲高电平，下降沿采样）
+- 从设备选择：SS0 控制 TLV5618 的 CS 引脚
+- 初始化代码：
+```c
+Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF); // CS 初始为高
+Xil_Out32(SPI_BASE + SPICR, 0xE6);        // 手动 CS + 主模式
+```
+
+### 2.4 定时器配置
+- 类型：AXI Timer，通道0
+- 计数模式：向上计数（从 TLR 到 0xFFFFFFFF 溢出产生中断）
+- 时钟频率：100MHz
+- 采样点数：128 点/周期
+- 频率计算公式：`load_value = 0xFFFFFFFF - (100000000 / (freq * 128)) + 1`
+- 初始化代码：
+```c
+u32 tcsr = Xil_In32(TIMER_BASE + XTC_TCSR_OFFSET);
+u32 load_value = calc_load_value(DEFAULT_FREQ_HZ);
+Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr & (~(1<<7)));   // 停止
+Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, load_value);           // 写初始值
+Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<5));      // 加载
+Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, ((1<<7)|(1<<6)|(1<<4)|(1<<3)) & (~(1<<5))); // 启动
+```
+
+---
+
+## 三、中断系统架构（配图建议：中断流程图）
+
+### 3.1 ARM GIC (Generic Interrupt Controller)
+- 使用 Xilinx XScuGic 驱动初始化 GIC
+- 三个中断源注册：
+
+```c
+// GIC 初始化
+XScuGic_Config *GicConfig;
+GicConfig = XScuGic_LookupConfig(XPAR_PS7_SCUGIC_0_DEVICE_ID);
+XScuGic_CfgInitialize(&GicInstance, GicConfig, GicConfig->CpuBaseAddress);
+
+// 注册异常处理器
+Xil_ExceptionInit();
+Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
+    (Xil_ExceptionHandler)XScuGic_InterruptHandler, &GicInstance);
+
+// 连接外设中断
+XScuGic_Connect(&GicInstance, 61, (Xil_ExceptionHandler)GPIO_Handler, NULL);
+XScuGic_Connect(&GicInstance, 62, (Xil_ExceptionHandler)T0Handler, NULL);
+
+XScuGic_Enable(&GicInstance, 61);  // GPIO
+XScuGic_Enable(&GicInstance, 62);  // Timer
+Xil_ExceptionEnable();
+```
+
+### 3.2 中断服务程序
+
+**T0Handler（定时器中断）**：
+```c
+void T0Handler(void *CallbackRef) {
+    u32 tcsr = Xil_In32(TIMER_BASE + XTC_TCSR_OFFSET);
+    if(tcsr & (1<<8)) {                        // 检查溢出标志
+        if(freq_update) {                       // 频率更新
+            freq_update = 0;
+            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
+        }
+        table_index_a++;                        // 相位累加
+        if(table_index_a >= 128) table_index_a = 0;
+        dac_pending = 1;                        // 通知主循环输出
+        Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<8));
+    }
+}
+```
+
+**GPIO_Handler（按键中断）**：读取按键值并处理
+
+**UART**：不使用中断，主循环轮询 `uart_poll()`（AXI UART Lite 8 位寄存器访问）
+
+---
+
+## 四、DDS 原理与实现（配图建议：DDS 相位累加器框图）
+
+### 4.1 波形查找表
+- 5 种波形，每种 128 点 × 8 位（0-127 幅值范围）
+- 正弦表：`64,67,70,...,57,60`（cos 波，避免跳变）
+- 方波表：前 64 点 127，后 64 点 0
+- 三角波表：线性递增 + 线性递减
+- 锯齿波表：单调递增 0→127
+- 任意波形表：默认拷贝正弦表
+
+### 4.2 DDS 合成原理
+输出频率 = (定时器时钟 / (分频系数 × 采样点数)) = (100MHz / (timer_cnt × 128))
+
+用户发送频率 f 时：
+- `timer_cnt = 100000000 / (f × 128)`
+- `load_value = 0xFFFFFFFF - timer_cnt + 1`
+- 定时器从 load_value 向上计数到 0xFFFFFFFF，溢出产生中断
+- 每次中断：`table_index++`，从查找表取 `wave_tables[wave_type][table_index]`
+- 经幅值调制：`output = (table_value × amplitude) >> 7`
+
+### 4.3 信号处理流程（配图建议：数据流图）
+```
+[频率字 f] → [calc_load_value] → [定时器 TLR]
+    ↓
+[定时器中断] → [相位累加 table_index++]
+    ↓
+[波形查找表] → [raw_val] → [× amplitude >> 7] → [DAC SPI 发送]
+```
+
+---
+
+## 五、TLV5618 DAC 驱动（配图建议：SPI 时序图 + 16 位数据帧结构）
+
+### 5.1 16 位 DIN 数据格式
+```
+D15  D14  D13  D12  |  D11 ... D0
+ 控   制   位          12 位数据 (0-4095)
+```
+
+| D15 | D14 | D13 | D12 | 模式 | 宏定义 | 功能 |
+|-----|-----|-----|-----|------|--------|------|
+| 0 | 0 | 0 | 0 | 00 | CHB_CMD=0x0000 | 写 DAC B + BUFFER |
+| 0 | 0 | 0 | 1 | 01 | BUF_CMD=0x1000 | 仅写 BUFFER |
+| 1 | 0 | 0 | 0 | 10 | CHA_CMD=0x8000 | 写 DAC A + BUFFER→DAC B |
+| x | 0 | x | x | slow | D14=0 | 慢速模式，建立时间 10μs |
+
+### 5.2 SPI 写函数
+```c
+void dac_write_fast(u16 cmd, u8 value) {
+    u16 tx = cmd | ((u16)value << 4);          // 组装 16 位帧
+    while(Xil_In32(SPI_BASE + SPISR) & (1<<3)); // 等 TX FIFO 不满（无 FIFO 时为 no-op）
+    Xil_Out32(SPI_BASE + SPIDTR, tx);           // 写入移位寄存器启动发送
+}
+```
+
+### 5.3 双通道同步输出序列（经过实验验证的关键实现）
+```
+CS↓ → CHB_CMD(CHB_val) → CS↑    // 写入 DAC B + BUFFER（第一遍）
+CS↓ → CHB_CMD(CHB_val) → CS↑    // 写入 DAC B + BUFFER（第二遍，必须！）
+CS↓ → CHA_CMD(CHA_val) → CS↑    // 写入 DAC A，同时 BUFFER→DAC B
+                                 // 两通道在 CHA 字 D0 采样后的 SCLK 上升沿同时更新
+```
+注释：CHB 数据必须写入两次，否则两通道都不会输出（实验发现）。
+
+### 5.4 CS 手动控制
+```c
+Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);  // CS ↓ (SS0 拉低)
+// ... SPI 发送 ...
+Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);  // CS ↑ (所有 SS 拉高)
+```
+
+---
+
+## 六、通信协议设计
+
+### 6.1 帧格式
+```
+Byte 0: 0xFF         帧同步头
+Byte 1: [CMD]        功能码(bit7:4) + 通道位(bit3)
+Byte 2-5: [D0][D1][D2][D3]  参数数据
+```
+
+### 6.2 CMD 字节结构
+```
+Bit:  7  6  5  4  |  3  |  2  1  0
+     [ 功能码  ]  | [CH] | [保留]
+```
+
+### 6.3 功能码表
+| func | 功能 | CH=0 (CHA) 示例 | CH=1 (CHB) 示例 |
+|------|------|------------------|------------------|
+| 0x0 | 波形 | `FF 00 00` = CHA 正弦 | `FF 08 01` = CHB 方波 |
+| 0x1 | 频率 | `FF 10 E8 03` = CHA 1000Hz（CH 忽略） |
+| 0x2 | 幅值 | `FF 20 64` = CHA 100 | `FF 28 7F` = CHB 127 |
+| 0x3 | 同步 | `FF 30 01` = syncon | `FF 30 00` = syncoff |
+| 0x4 | 频率索引 | `FF 40 09` = 1kHz（CH 忽略） |
+
+### 6.4 UART 帧解析代码
+```c
+void uart_poll(void) {
+    while(Xil_In8(UART_BASE + 0x08) & 0x01) {        // RX FIFO 有数据
+        u8 rx = Xil_In8(UART_BASE + 0x00);
+        if(!uart_got_sync) {
+            if(rx == 0xFF) { uart_got_sync = 1; uart_idx = 0; }
+        } else {
+            uart_frame[uart_idx++] = rx;
+            if(uart_idx >= 5) {
+                process_fixed_frame(uart_frame[0], &uart_frame[1]);
+                uart_got_sync = 0; uart_idx = 0;
+            }
+        }
+    }
+}
+```
+
+### 6.5 命令分发代码
+```c
+void process_fixed_frame(u8 cmd_ch, u8* data) {
+    u8 func = (cmd_ch >> 4) & 0x0F;
+    u8 ch   = (cmd_ch >> 3) & 0x01;
+
+    if(func == 0x3) {                              // 同步模式
+        sync_mode = (data[0] != 0) ? 1 : 0;
+        return;
+    }
+    switch(func) {
+        case 0x0: /* 波形 */  break;
+        case 0x1: /* 频率 */  break;
+        case 0x2: /* 幅值 */  break;
+        case 0x4: /* 频率索引 */ break;
+    }
+}
+```
+
+---
+
+## 七、双通道输出实现
+
+### 7.1 syncoff（独立模式，默认）—— 两通道独立波形/幅值
+```
+ISR 每次触发 → 交替执行：
+  偶数次：CS↓ → CHB_CMD×2(CHB数据) → CS↑  (输出 CHB)
+  奇数次：CS↓ → CHA_CMD(CHA数据)     → CS↑  (输出 CHA)
+有效采样率：64 点/周期/通道
+```
+
+### 7.2 syncon（同步模式）—— 两通道完全一致
+```
+ISR 每次触发 → 统一执行：
+  CS↓ → CHB_CMD×2(CHA数据) → CS↑ → CS↓ → CHA_CMD(CHA数据) → CS↑
+两通道输出相同 CHA 波形，128 点/周期
+```
+
+### 7.3 主循环架构
+```c
+while(1) {
+    uart_poll();                    // 轮询 UART 接收指令
+    if(dac_pending) {               // 定时器 ISR 已置标志
+        dac_pending = 0;
+        if(sync_mode) { /* syncon 三步写入 */ }
+        else          { /* syncoff 交替写入 */ }
+    }
+}
+```
+设计理由：SPI 写入可能较慢（无 FIFO + 多笔），放在主循环而非 ISR 中避免中断嵌套和定时器溢出。
+
+---
+
+## 八、系统软件架构（配图建议：软件流程图 + 函数调用关系图）
+
+### 8.1 系统启动流程
+```
+上电 → main()
+  → arb_table_init()      // 初始化任意波形表
+  → spi_init()            // SPI 手动 CS 模式
+  → gpio_init()           // GPIO 按键中断
+  → uart_init()           // UART Lite 初始化
+  → timer_init()          // 配置 128 步×300Hz 定时器
+  → intc_init()           // GIC + 注册 ISR + 开全局中断
+  → while(1) { uart_poll(); dac_update(); }
+```
+
+### 8.2 全局状态变量
+```c
+volatile u8  table_index_a;    // 相位累加器 (0-127)
+volatile u8  wave_type_a;      // CHA 波形类型
+volatile u8  wave_type_b;      // CHB 波形类型
+volatile u8  amplitude_a;      // CHA 幅值
+volatile u8  amplitude_b;      // CHB 幅值
+volatile u8  sync_mode;        // 同步模式标志 (0=独立, 1=同步)
+volatile u32 freq_hz_a;        // 当前频率 (Hz)
+volatile u8  dac_pending;      // DAC 更新标志 (ISR 写, 主循环清)
+u32 sw;                        // 通用标志位 (sw[30]=syncoff 相位)
+```
+
+---
+
+## 九、关键技术问题与解决方案（重点章节）
+
+### 9.1 SPI 无 FIFO 导致的总线异常
+- **问题**：AXI Quad SPI 配置为 FIFO_DEPTH=0，两次连续写入 SPIDTR 导致 AXI 总线 SLVERR
+- **现象**：硬件异常 → 程序卡死
+- **解决**：每笔 SPI 写入后用延时等待移位寄存器空闲，CS 拉高确保传输结束
+
+### 9.2 TLV5618 双通道输出要求
+- **问题**：按 Datasheet 的 BUF_CMD + CHA_CMD 两步写入无法让双通道同时工作
+- **实验发现**：CHB 数据必须写入**两次**（CHB_CMD × 2），再写 CHA_CMD，两通道才有输出
+- **原因推测**：TLV5618 内部 BUFFER 需要两次写入来锁存 CHB 数据
+
+### 9.3 手动 CS 模式配置
+- **问题**：默认 SPICR=0x66 为自动 CS 模式，手动写 SPISSR 无效
+- **解决**：修改 SPICR=0xE6（bit7=1 手动模式），通过 SPISSR 完全控制 CS 时序
+
+### 9.4 AXI UART Lite 寄存器宽度
+- **问题**：MicroBlaze 版本使用 Xil_In32/Xil_Out32 操作 UART 成功，Zynq-7 上失败
+- **解决**：AXI UART Lite 是 8 位寄存器，必须使用 Xil_In8/Xil_Out8
+
+### 9.5 平台迁移（MicroBlaze → Zynq-7）
+- MicroBlaze 100MHz，Zynq-7 667MHz → 定时器中断处理更从容
+- MicroBlaze 使用 AXI INTC，Zynq-7 使用 ARM GIC → 中断注册方式完全不同
+- MicroBlaze 有 fast_interrupt 属性限制，ARM 无此限制
+- MicroBlaze BRAM 极小（16KB），新增全局变量受限；Zynq-7 DDR 内存充足
+
+---
+
+## 十、测试结果（配图建议：示波器截图）
+
+### 10.1 基本波形测试
+- 正弦波/方波/三角波/锯齿波输出正常
+- 频率可调范围 1Hz ~ 2kHz，误差 < 0.5%
+- 幅值 0-127 线性可控
+
+### 10.2 双通道测试
+- syncoff：CHA/CHB 可独立设置不同波形和幅值
+- syncon：两通道输出完全相同的波形
+- 两通道频率始终相同（共享定时器）
+
+### 10.3 已知限制
+- 最大频率 2kHz（受 SPI 带宽限制）
+- 高频时波形略离散（主循环采样丢失）
+- TLV5618 需 slow mode，更新速率受限
+
+---
+
+## PPT 结构建议（20-25 页）
+
+1. **封面** — 题目、姓名、导师、日期
+2. **目录** — 章节导航
+3. **研究背景** — DDS 技术简介、应用场景（信号源、测试仪器）
+4. **项目目标** — 双通道、多波形、串口控制、触摸屏交互
+5. **系统总体架构** — Zynq PS/PL 划分框图
+6. **硬件平台** — 芯片选型、外设列表、基地址表
+7. **DDS 原理** — 相位累加器、查找表、频率计算公式
+8. **波形生成** — 5 种波形、128 点查找表设计
+9. **TLV5618 DAC 驱动** — 16 位帧格式、SPI 时序、CS 控制
+10. **双通道同步机制** — 三步写入序列、BUFFER 原理
+11. **通信协议设计** — 6 字节帧、CMD 编码、通道选择
+12. **中断系统** — GIC 架构、Timer/GPIO ISR、UART 轮询
+13. **软件架构** — 主循环 + ISR 分工、函数调用关系
+14. **程序流程图** — 启动流程、中断处理流程、命令解析流程
+15. **关键代码展示** — calc_load_value、dac_write_fast、process_fixed_frame
+16. **开发过程与问题** — SPI 无 FIFO、TLV5618 双写、UART 8 位、平台迁移
+17. **测试方案** — 测试环境、测试项、测试方法
+18. **测试结果（一）** — 基本波形示波器截图
+19. **测试结果（二）** — 双通道同步/独立波形截图
+20. **测试结果（三）** — 频率精度、幅值线性度
+21. **已知限制** — 频率上限、SPI 带宽约束
+22. **项目总结** — 完成情况、技术收获
+23. **展望** — 增加 DMA、提高频率、增加更多波形
+24. **致谢**
+25. **Q&A**
