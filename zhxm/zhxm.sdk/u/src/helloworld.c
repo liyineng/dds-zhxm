@@ -272,7 +272,7 @@ volatile u8 uart_got_sync;
 
 volatile u8 gpio_key_value = 0;
 
-u32 sw = 1;
+volatile u32 sw = 1;
 
 
 
