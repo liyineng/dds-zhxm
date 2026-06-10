@@ -252,6 +252,8 @@ volatile u8 wave_type_b = WAVE_SINE;
 volatile u8 amplitude_a = 127;
 
 volatile u8 amplitude_b = 127;
+
+volatile u8 sync_mode  = 0;
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
@@ -406,13 +408,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     if(func == FCMD_SYNC) {
 
-        if(data[0] != 0)
-
-            sw |=  0x80000000;
-
-        else
-
-            sw &= ~0x80000000;
+        sync_mode = (data[0] != 0) ? 1 : 0;
 
         return;
 
