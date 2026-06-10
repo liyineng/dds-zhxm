@@ -360,7 +360,7 @@ int main(void)
         uart_poll();
         if(dac_pending) {
             dac_pending = 0;
-            if(sync_mode) {
+            {
                 u8 rv_a = wave_tables[wave_type_a][table_index_a];
                 u8 rv_b = wave_tables[wave_type_b][table_index_a];
                 u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
@@ -382,10 +382,6 @@ int main(void)
                 Xil_Out32(SPI_BASE + SPIDTR, tx_a);
                 while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
                 Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
-            } else {
-                u8 raw_val = wave_tables[wave_type_a][table_index_a];
-                u8 out_val = (raw_val * amplitude_a) >> 7;
-                dac_write_fast(CHA_CMD, out_val);
             }
         }
     };
