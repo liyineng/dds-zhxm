@@ -264,6 +264,10 @@ volatile u8 freq_update;
 
 volatile u32 new_load_value;
 
+volatile u8  need_timer_update = 0;
+
+volatile u32 pending_freq;
+
 
 
 
@@ -436,11 +440,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
                  | ((u32)data[2] << 16) | ((u32)data[3] << 24);
 
-            freq_hz_a = freq; new_freq = freq;
+            freq_hz_a = freq;
 
-            new_load_value = calc_load_value(freq);
+            pending_freq = freq;
 
-            freq_update = 1;
+            need_timer_update = 1;
 
             break;
 
@@ -458,11 +462,9 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             sync_phase = 0;
 
-            new_freq   = freq_hz_a;
+            pending_freq = freq_hz_a;
 
-            new_load_value = calc_load_value(freq_hz_a);
-
-            freq_update = 1;
+            need_timer_update = 1;
 
             break;
 
@@ -472,11 +474,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             freq = freq_table[data[0]];
 
-            freq_hz_a = freq; new_freq = freq;
+            freq_hz_a = freq;
 
-            new_load_value = calc_load_value(freq);
+            pending_freq = freq;
 
-            freq_update = 1;
+            need_timer_update = 1;
 
             break;
 
@@ -799,9 +801,17 @@ int main(void)
 
     while(1){
 
-//    for(int i=0;i<10000;i++);
+        if(need_timer_update) {
 
-//
+            need_timer_update = 0;
+
+            new_freq = pending_freq;
+
+            new_load_value = calc_load_value(pending_freq);
+
+            freq_update = 1;
+
+        }
 
     };
 
