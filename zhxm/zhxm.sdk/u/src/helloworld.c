@@ -247,13 +247,13 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
-volatile u8 wave_type_b = WAVE_SINE;
+volatile u8 wave_type_b;
 
 volatile u8 amplitude_a = 127;
 
-volatile u8 amplitude_b = 127;
+volatile u8 amplitude_b;
 
-volatile u8 sync_mode  = 0;
+volatile u8 sync_mode;
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
@@ -725,7 +725,11 @@ int main(void)
 
 {
 
-    arb_table_init();
+    wave_type_b = WAVE_SINE;
+
+    amplitude_b = 127;
+
+    sync_mode   = 0;
 
     spi_init();
 
