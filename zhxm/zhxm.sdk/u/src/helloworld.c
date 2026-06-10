@@ -606,11 +606,33 @@ void T0Handler(void)
 
         }
 
-        u8 raw_val = wave_tables[wave_type_a][table_index_a];
+        if(sw & 0x80000000) {
 
-        u8 out_val = (raw_val * amplitude_a) >> 7;
+            u8 rv_a = wave_tables[wave_type_a][table_index_a];
 
-        dac_write_fast(CHA_CMD, out_val);
+            u8 rv_b = wave_tables[wave_type_b][table_index_a];
+
+            u8 ov_a = (rv_a * amplitude_a) >> 7;
+
+            u8 ov_b = (rv_b * amplitude_b) >> 7;
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            dac_write_fast(BUF_CMD, ov_b);
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            dac_write_fast(CHA_CMD, ov_a);
+
+        } else {
+
+            u8 raw_val = wave_tables[wave_type_a][table_index_a];
+
+            u8 out_val = (raw_val * amplitude_a) >> 7;
+
+            dac_write_fast(CHA_CMD, out_val);
+
+        }
 
 
 
