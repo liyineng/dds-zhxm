@@ -163,8 +163,8 @@ u32 calc_load_value(u32 freq_hz);
  ************************************************/
 void spi_init(void)
 {
-    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
-    Xil_Out32(SPI_BASE + SPICR, 0x66);
+    Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+    Xil_Out32(SPI_BASE + SPICR, 0xE6);
 }
 
 void dac_write_fast(u16 cmd, u8 value)
@@ -365,12 +365,25 @@ int main(void)
                 u8 rv_b = wave_tables[wave_type_b][table_index_a];
                 u8 ov_a = (rv_a * amplitude_a) >> 7;
                 u8 ov_b = (rv_b * amplitude_b) >> 7;
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHB_CMD, ov_b);
                 {
                     volatile u32 _d;
                     for(_d = 0; _d < 50000; _d++);
                 }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 500; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
                 dac_write_fast(CHA_CMD, ov_a);
+                {
+                    volatile u32 _d;
+                    for(_d = 0; _d < 50000; _d++);
+                }
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
             }
         }
     };
