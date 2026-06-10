@@ -64,8 +64,6 @@
 
 
 
-// 中断掩码
-
 #define XPAR_GPIO_INTR_ID       0
 
 #define XPAR_TIMER_INTR_ID      1
@@ -74,22 +72,25 @@
 
 
 
-#define GPIO_MASK   (1 << XPAR_GPIO_INTR_ID)   // 0x01
+#define GPIO_MASK   (1 << XPAR_GPIO_INTR_ID)
 
-#define TIMER_MASK  (1 << XPAR_TIMER_INTR_ID)  // 0x02
+#define TIMER_MASK  (1 << XPAR_TIMER_INTR_ID)
 
-#define UART_MASK   (1 << XPAR_UART_INTR_ID)   // 0x04
+#define UART_MASK   (1 << XPAR_UART_INTR_ID)
 
 
 
 #define CHA_CMD     0xC000
 
+#define CHB_CMD     0x4000
+
+#define BUF_CMD     0x5000
 
 
 
 #define TIMER_CLK_HZ         100000000
 
-#define SAMPLES_PER_CYCLE    128              // 改为128�?
+#define SAMPLES_PER_CYCLE    128
 
 #define DEFAULT_FREQ_HZ      300
 
@@ -106,10 +107,6 @@
 
 
 
-
-// Fixed 6-byte frame: FF [FUNC+CH] [D0] [D1] [D2] [D3]
-// CMD byte: bits[7:4]=function  bit[3]=channel
-
 #define FRAME_SYNC      0xFF
 
 #define FCMD_WAVE       0x0
@@ -118,15 +115,15 @@
 
 #define FCMD_AMP        0x2
 
+#define FCMD_SYNC       0x3
 
 #define FCMD_FREQ_IDX   0x4
 
 
 
-
 /************************************************
 
- * 波形查找表（128点，每个值除�?，范�?-127�?
+ * 波形查找表
 
  ************************************************/
 
@@ -222,8 +219,6 @@ u8 arbitrary_table[128];
 
 
 
-// 波形指针数组（快速查表）
-
 const u8* wave_tables[5] = { sine_table, square_table, triangle_table, sawtooth_table, arbitrary_table };
 
 
@@ -233,7 +228,7 @@ const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 500
 
 /************************************************
 
- * 全局状态变�?
+ * 全局状态变量
 
  ************************************************/
 
@@ -242,15 +237,19 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
+volatile u8 wave_type_b = WAVE_SINE;
 
-volatile u8 amplitude_a = 127;              // 最大幅值改�?27
+volatile u8 amplitude_a = 127;
 
+volatile u8 amplitude_b = 127;
 
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
 
 volatile u8 freq_update;
+
+
 
 
 
@@ -341,7 +340,7 @@ void dac_write_fast(u16 cmd, u8 value)
 
 /************************************************
 
- * 定时器频率计算（向上计数模式�?
+ * 定时器频率计算（向上计数模式）
 
  ************************************************/
 
@@ -368,9 +367,10 @@ u32 calc_load_value(u32 freq_hz)
 
 
 
+
 /************************************************
 
- * UART 驱动与命令解�?
+ * UART 驱动与命令解析
 
   ************************************************/
 
@@ -394,7 +394,23 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
+    u8 ch   = (cmd_ch >> 3) & 0x01;
+
     u32 freq;
+
+    if(func == FCMD_SYNC) {
+
+        if(data[0] != 0)
+
+            sw |=  0x80000000;
+
+        else
+
+            sw &= ~0x80000000;
+
+        return;
+
+    }
 
     switch(func)
 
@@ -402,7 +418,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_WAVE:
 
-            wave_type_a = data[0]; table_index_a = 0;
+            if(ch == 0) wave_type_a = data[0];
+
+            else        wave_type_b = data[0];
+
+            table_index_a = 0;
 
             break;
 
@@ -418,7 +438,9 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_AMP:
 
-            amplitude_a = data[0];
+            if(ch == 0) amplitude_a = data[0];
+
+            else        amplitude_b = data[0];
 
             break;
 
@@ -504,7 +526,7 @@ void UART_Handler(void)
 
 /************************************************
 
- * GPIO 快速中断（保留调频功能�?
+ * GPIO 快速中断
 
  ************************************************/
 
@@ -512,39 +534,9 @@ void GPIO_Handler(void)
 
 {
 
-//    u32 timer_cnt;
-
-//    u32 load_value;
-
-//    u32 tcsr;
-
-//
-
     gpio_key_value = Xil_In32(GPIO_BASE + 0x00) & 0xFF;
 
     if(sw == 0) sw = 1;
-
-//
-
-//    timer_cnt = (23437 + ((390625 - 23437) * sw) / 255) / 100;
-
-//    load_value = 0xFFFFFFFF - timer_cnt + 1;
-
-//
-
-//    tcsr = Xil_In32(TIMER_BASE + XTC_TCSR_OFFSET);
-
-//    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr & (~(1<<7)));
-
-//    Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, load_value);
-
-//    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr | (1<<5));
-
-//    Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET,
-
-//              (tcsr & (1<<3)) | ((1<<7) | (1<<6) | (1<<4)) & (~(1<<5)));
-
-
 
     Xil_Out32(GPIO_BASE + 0x120, 1);
 
@@ -556,7 +548,7 @@ void GPIO_Handler(void)
 
 /************************************************
 
- * 定时器快速中断（双通道波形输出�?
+ * 定时器快速中断（双通道波形输出）
 
  ************************************************/
 
@@ -578,11 +570,53 @@ void T0Handler(void)
 
         }
 
-        u8 raw_val = wave_tables[wave_type_a][table_index_a];
+        if(sw & 0x80000000) {
 
-        u8 out_val = (raw_val * amplitude_a) >> 7;
+            u8 rv_a = wave_tables[wave_type_a][table_index_a];
 
-        dac_write_fast(CHA_CMD, out_val);
+            u8 rv_b = wave_tables[wave_type_b][table_index_a];
+
+            u16 tx_b = BUF_CMD | ((u16)(((rv_b * amplitude_b) >> 7)) << 4);
+
+            u16 tx_a = CHA_CMD | ((u16)(((rv_a * amplitude_a) >> 7)) << 4);
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+
+            Xil_Out32(SPI_BASE + SPIDTR, tx_b);
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+            {
+
+                volatile u32 _d;
+
+                for(_d = 0; _d < 80; _d++);
+
+            }
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+
+            Xil_Out32(SPI_BASE + SPIDTR, tx_a);
+
+            while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+            Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+        } else {
+
+            u8 raw_val = wave_tables[wave_type_a][table_index_a];
+
+            u8 out_val = (raw_val * amplitude_a) >> 7;
+
+            dac_write_fast(CHA_CMD, out_val);
+
+        }
 
 
 
@@ -604,7 +638,7 @@ void T0Handler(void)
 
 /************************************************
 
- * 初始化函�?
+ * 初始化函数
 
  ************************************************/
 
@@ -656,7 +690,6 @@ void timer_init(void)
 
 
 
-
     Xil_Out32(TIMER_BASE + XTC_TCSR_OFFSET, tcsr & (~(1<<7)));
 
     Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, load_value);
@@ -674,7 +707,6 @@ void intc_init(void)
 {
 
     Xil_Out32(INTC_BASE + XIN_IAR_OFFSET, GPIO_MASK | TIMER_MASK | UART_MASK);
-
 
 
     Xil_Out32(INTC_BASE + XIN_IER_OFFSET, GPIO_MASK | TIMER_MASK | UART_MASK);
@@ -695,7 +727,7 @@ void intc_init(void)
 
 /************************************************
 
- * 主函�?
+ * 主函数
 
  ************************************************/
 
@@ -718,10 +750,6 @@ int main(void)
 
 
     while(1){
-
-//    for(int i=0;i<10000;i++);
-
-//
 
     };
 
