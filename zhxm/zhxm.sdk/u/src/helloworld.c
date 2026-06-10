@@ -82,16 +82,14 @@
 
 
 
-#define CHA_CMD     0xC000   // D15=1,D12=0: 写CHA+BUFFER更新到CHB
+#define CHA_CMD     0xC000
 
-#define CHB_CMD     0x4000   // D15=0,D12=0: 写CHB+BUFFER
 
-#define BUF_CMD     0x5000   // D15=0,D12=1: 仅写BUFFER
 
 
 #define TIMER_CLK_HZ         100000000
 
-#define SAMPLES_PER_CYCLE    128              // 改为128�?
+#define SAMPLES_PER_CYCLE    128              // 改为128�?
 
 #define DEFAULT_FREQ_HZ      300
 
@@ -120,7 +118,6 @@
 
 #define FCMD_AMP        0x2
 
-#define FCMD_SYNC       0x3
 
 #define FCMD_FREQ_IDX   0x4
 
@@ -129,7 +126,7 @@
 
 /************************************************
 
- * 波形查找表（128点，每个值除�?，范�?-127�?
+ * 波形查找表（128点，每个值除�?，范�?-127�?
 
  ************************************************/
 
@@ -236,7 +233,7 @@ const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 500
 
 /************************************************
 
- * 全局状态变�?
+ * 全局状态变�?
 
  ************************************************/
 
@@ -245,15 +242,8 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
-volatile u8 wave_type_b = WAVE_SINE;
 
-volatile u8 amplitude_a = 127;
-
-volatile u8 amplitude_b = 127;
-
-volatile u8 sync_mode  = 0;
-
-volatile u8 sync_phase = 0;
+volatile u8 amplitude_a = 127;              // 最大幅值改�?27
 
 
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
@@ -261,12 +251,6 @@ volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 volatile u32 new_freq;
 
 volatile u8 freq_update;
-
-volatile u32 new_load_value;
-
-volatile u8  need_timer_update = 0;
-
-volatile u32 pending_freq;
 
 
 
@@ -357,7 +341,7 @@ void dac_write_fast(u16 cmd, u8 value)
 
 /************************************************
 
- * 定时器频率计算（向上计数模式�?
+ * 定时器频率计算（向上计数模式�?
 
  ************************************************/
 
@@ -371,13 +355,7 @@ u32 calc_load_value(u32 freq_hz)
 
     if(freq_hz > 20000) freq_hz = 20000;
 
-    if(sync_mode)
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 256);
-
-    else
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 128);
+    timer_cnt = TIMER_CLK_HZ / (freq_hz * SAMPLES_PER_CYCLE);
 
     if(timer_cnt < 2) timer_cnt = 2;
 
@@ -392,7 +370,7 @@ u32 calc_load_value(u32 freq_hz)
 
 /************************************************
 
- * UART 驱动与命令解�?
+ * UART 驱动与命令解�?
 
   ************************************************/
 
@@ -416,8 +394,6 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
-    u8 ch   = (cmd_ch >> 3) & 0x01;   // bit[3]: 0=CHA, 1=CHB
-
     u32 freq;
 
     switch(func)
@@ -426,11 +402,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_WAVE:
 
-            if(ch == 0) wave_type_a = data[0];
-
-            else        wave_type_b = data[0];
-
-            table_index_a = 0;
+            wave_type_a = data[0]; table_index_a = 0;
 
             break;
 
@@ -440,31 +412,13 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
                  | ((u32)data[2] << 16) | ((u32)data[3] << 24);
 
-            freq_hz_a = freq;
-
-            pending_freq = freq;
-
-            need_timer_update = 1;
+            freq_hz_a = freq; new_freq = freq; freq_update = 1;
 
             break;
 
         case FCMD_AMP:
 
-            if(ch == 0) amplitude_a = data[0];
-
-            else        amplitude_b = data[0];
-
-            break;
-
-        case FCMD_SYNC:
-
-            sync_mode  = (data[0] != 0) ? 1 : 0;
-
-            sync_phase = 0;
-
-            pending_freq = freq_hz_a;
-
-            need_timer_update = 1;
+            amplitude_a = data[0];
 
             break;
 
@@ -474,11 +428,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             freq = freq_table[data[0]];
 
-            freq_hz_a = freq;
-
-            pending_freq = freq;
-
-            need_timer_update = 1;
+            freq_hz_a = freq; new_freq = freq; freq_update = 1;
 
             break;
 
@@ -554,7 +504,7 @@ void UART_Handler(void)
 
 /************************************************
 
- * GPIO 快速中断（保留调频功能�?
+ * GPIO 快速中断（保留调频功能�?
 
  ************************************************/
 
@@ -606,7 +556,7 @@ void GPIO_Handler(void)
 
 /************************************************
 
- * 定时器快速中断（双通道波形输出�?
+ * 定时器快速中断（双通道波形输出�?
 
  ************************************************/
 
@@ -624,53 +574,21 @@ void T0Handler(void)
 
             freq_update = 0;
 
-            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, new_load_value);
+            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
 
         }
 
-        if(sync_mode) {
+        u8 raw_val = wave_tables[wave_type_a][table_index_a];
 
-            if(sync_phase == 0) {
+        u8 out_val = (raw_val * amplitude_a) >> 7;
 
-                u8 raw_val_b = wave_tables[wave_type_b][table_index_a];
-
-                u8 out_val_b = (raw_val_b * amplitude_b) >> 7;
-
-                dac_write_fast(BUF_CMD, out_val_b);
-
-                sync_phase = 1;
-
-            } else {
-
-                u8 raw_val_a = wave_tables[wave_type_a][table_index_a];
-
-                u8 out_val_a = (raw_val_a * amplitude_a) >> 7;
-
-                dac_write_fast(CHA_CMD, out_val_a);
-
-                sync_phase = 0;
-
-                table_index_a++;
-
-                if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
-            }
-
-        } else {
-
-            u8 raw_val = wave_tables[wave_type_a][table_index_a];
-
-            u8 out_val = (raw_val * amplitude_a) >> 7;
-
-            dac_write_fast(CHA_CMD, out_val);
+        dac_write_fast(CHA_CMD, out_val);
 
 
 
-            table_index_a++;
+        table_index_a++;
 
-            if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
-
-        }
+        if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
 
 
 
@@ -686,7 +604,7 @@ void T0Handler(void)
 
 /************************************************
 
- * 初始化函�?
+ * 初始化函�?
 
  ************************************************/
 
@@ -777,7 +695,7 @@ void intc_init(void)
 
 /************************************************
 
- * 主函�?
+ * 主函�?
 
  ************************************************/
 
@@ -801,17 +719,9 @@ int main(void)
 
     while(1){
 
-        if(need_timer_update) {
+//    for(int i=0;i<10000;i++);
 
-            need_timer_update = 0;
-
-            new_freq = pending_freq;
-
-            new_load_value = calc_load_value(pending_freq);
-
-            freq_update = 1;
-
-        }
+//
 
     };
 
