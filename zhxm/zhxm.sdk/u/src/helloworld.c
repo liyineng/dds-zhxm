@@ -404,6 +404,20 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u32 freq;
 
+    if(func == FCMD_SYNC) {
+
+        if(data[0] != 0)
+
+            sw |=  0x80000000;
+
+        else
+
+            sw &= ~0x80000000;
+
+        return;
+
+    }
+
     switch(func)
 
     {
@@ -446,21 +460,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             break;
 
-        default:
-
-            if(func == FCMD_SYNC) {
-
-                if(data[0] != 0)
-
-                    sw |=  0x80000000;
-
-                else
-
-                    sw &= ~0x80000000;
-
-            }
-
-            break;
+        default: break;
 
     }
 
