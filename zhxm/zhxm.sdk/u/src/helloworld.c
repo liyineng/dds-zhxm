@@ -262,6 +262,8 @@ volatile u32 new_freq;
 
 volatile u8 freq_update;
 
+volatile u32 new_load_value;
+
 
 
 
@@ -361,15 +363,17 @@ u32 calc_load_value(u32 freq_hz)
 
     u32 timer_cnt;
 
-    u32 samples;
-
     if(freq_hz == 0) freq_hz = 1;
 
     if(freq_hz > 20000) freq_hz = 20000;
 
-    samples = sync_mode ? (SAMPLES_PER_CYCLE * 2) : SAMPLES_PER_CYCLE;
+    if(sync_mode)
 
-    timer_cnt = TIMER_CLK_HZ / (freq_hz * samples);
+        timer_cnt = TIMER_CLK_HZ / (freq_hz * 256);
+
+    else
+
+        timer_cnt = TIMER_CLK_HZ / (freq_hz * 128);
 
     if(timer_cnt < 2) timer_cnt = 2;
 
@@ -432,7 +436,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
                  | ((u32)data[2] << 16) | ((u32)data[3] << 24);
 
-            freq_hz_a = freq; new_freq = freq; freq_update = 1;
+            freq_hz_a = freq; new_freq = freq;
+
+            new_load_value = calc_load_value(freq);
+
+            freq_update = 1;
 
             break;
 
@@ -452,6 +460,8 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             new_freq   = freq_hz_a;
 
+            new_load_value = calc_load_value(freq_hz_a);
+
             freq_update = 1;
 
             break;
@@ -462,7 +472,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
             freq = freq_table[data[0]];
 
-            freq_hz_a = freq; new_freq = freq; freq_update = 1;
+            freq_hz_a = freq; new_freq = freq;
+
+            new_load_value = calc_load_value(freq);
+
+            freq_update = 1;
 
             break;
 
@@ -608,7 +622,7 @@ void T0Handler(void)
 
             freq_update = 0;
 
-            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, calc_load_value(new_freq));
+            Xil_Out32(TIMER_BASE + XTC_TLR_OFFSET, new_load_value);
 
         }
 
