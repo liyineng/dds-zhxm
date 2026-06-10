@@ -361,13 +361,7 @@ u32 calc_load_value(u32 freq_hz)
 
     if(freq_hz > 20000) freq_hz = 20000;
 
-    if(sw & 0x80000000)
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 256);
-
-    else
-
-        timer_cnt = TIMER_CLK_HZ / (freq_hz * 128);
+    timer_cnt = TIMER_CLK_HZ / (freq_hz * SAMPLES_PER_CYCLE);
 
     if(timer_cnt < 2) timer_cnt = 2;
 
@@ -421,10 +415,6 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
             sw &= ~0x80000000;
 
         sw &= ~0x40000000;
-
-        new_freq = freq_hz_a;
-
-        freq_update = 1;
 
         return;
 
@@ -626,7 +616,7 @@ void T0Handler(void)
 
                 u8 ov_b = (rv_b * amplitude_b) >> 7;
 
-                dac_write_fast(BUF_CMD, ov_b);
+                dac_write_fast(CHB_CMD, ov_b);
 
                 sw |= 0x40000000;
 
