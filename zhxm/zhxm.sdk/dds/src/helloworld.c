@@ -296,8 +296,7 @@ void gpio_init(void)
 
 void uart_init(void)
 {
-    Xil_Out32(UART_BASE + UART_CONTROL, 0x03);
-    Xil_Out32(UART_BASE + UART_CONTROL, 0x10);
+    Xil_Out32(UART_BASE + UART_CONTROL, 0x13);
 }
 
 void timer_init(void)
