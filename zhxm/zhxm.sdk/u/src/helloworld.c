@@ -84,16 +84,12 @@
 
 #define CHA_CMD     0xC000
 
-#define CHB_CMD     0x4000
-
-#define BUF_CMD     0x5000
-
 
 
 
 #define TIMER_CLK_HZ         100000000
 
-#define SAMPLES_PER_CYCLE    128              // 改为128�?
+#define SAMPLES_PER_CYCLE    128              // 改为128�?
 
 #define DEFAULT_FREQ_HZ      300
 
@@ -122,7 +118,6 @@
 
 #define FCMD_AMP        0x2
 
-#define FCMD_SYNC       0x3
 
 #define FCMD_FREQ_IDX   0x4
 
@@ -131,7 +126,7 @@
 
 /************************************************
 
- * 波形查找表（128点，每个值除�?，范�?-127�?
+ * 波形查找表（128点，每个值除�?，范�?-127�?
 
  ************************************************/
 
@@ -238,7 +233,7 @@ const u32 freq_table[14] = { 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 500
 
 /************************************************
 
- * 全局状态变�?
+ * 全局状态变�?
 
  ************************************************/
 
@@ -247,13 +242,10 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
-volatile u8 wave_type_b = WAVE_SINE;
 
-volatile u8 amplitude_a = 127;
+volatile u8 amplitude_a = 127;              // 最大幅值改�?27
 
-volatile u8 amplitude_b = 127;
 
-volatile u8 sync_mode  = 0;
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
@@ -349,7 +341,7 @@ void dac_write_fast(u16 cmd, u8 value)
 
 /************************************************
 
- * 定时器频率计算（向上计数模式�?
+ * 定时器频率计算（向上计数模式�?
 
  ************************************************/
 
@@ -378,7 +370,7 @@ u32 calc_load_value(u32 freq_hz)
 
 /************************************************
 
- * UART 驱动与命令解�?
+ * UART 驱动与命令解�?
 
   ************************************************/
 
@@ -402,8 +394,6 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
-    u8 ch   = (cmd_ch >> 3) & 0x01;
-
     u32 freq;
 
     switch(func)
@@ -412,11 +402,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_WAVE:
 
-            if(ch == 0) wave_type_a = data[0];
-
-            else        wave_type_b = data[0];
-
-            table_index_a = 0;
+            wave_type_a = data[0]; table_index_a = 0;
 
             break;
 
@@ -432,15 +418,7 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_AMP:
 
-            if(ch == 0) amplitude_a = data[0];
-
-            else        amplitude_b = data[0];
-
-            break;
-
-        case FCMD_SYNC:
-
-            sync_mode = (data[0] != 0) ? 1 : 0;
+            amplitude_a = data[0];
 
             break;
 
@@ -526,7 +504,7 @@ void UART_Handler(void)
 
 /************************************************
 
- * GPIO 快速中断（保留调频功能�?
+ * GPIO 快速中断（保留调频功能�?
 
  ************************************************/
 
@@ -578,7 +556,7 @@ void GPIO_Handler(void)
 
 /************************************************
 
- * 定时器快速中断（双通道波形输出�?
+ * 定时器快速中断（双通道波形输出�?
 
  ************************************************/
 
@@ -626,7 +604,7 @@ void T0Handler(void)
 
 /************************************************
 
- * 初始化函�?
+ * 初始化函�?
 
  ************************************************/
 
@@ -717,7 +695,7 @@ void intc_init(void)
 
 /************************************************
 
- * 主函�?
+ * 主函�?
 
  ************************************************/
 
