@@ -274,7 +274,7 @@ volatile u8 uart_got_sync;
 
 volatile u8 gpio_key_value = 0;
 
-u32 sw = 1;
+volatile u8 sync_mode = 0;
 
 
 
@@ -546,11 +546,9 @@ void GPIO_Handler(void)
 
     gpio_key_value = Xil_In32(GPIO_BASE + 0x00) & 0xFF;
 
-    if(sw == 0) sw = 1;
-
 //
 
-//    timer_cnt = (23437 + ((390625 - 23437) * sw) / 255) / 100;
+    //    timer_cnt = (23437 + ((390625 - 23437) * sw) / 255) / 100;
 
 //    load_value = 0xFFFFFFFF - timer_cnt + 1;
 
