@@ -408,13 +408,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         if(data[0] != 0)
 
-            sw |= 0x80000000;
+            sw |=  0x80000000;
 
         else
 
             sw &= ~0x80000000;
-
-        sw &= ~0x40000000;
 
         new_freq = freq_hz_a;
 
@@ -614,29 +612,47 @@ void T0Handler(void)
 
         if(sw & 0x80000000) {
 
-            if(!(sw & 0x40000000)) {
+            u8 rv_a = wave_tables[wave_type_a][table_index_a];
 
-                u8 rv_b = wave_tables[wave_type_b][table_index_a];
+            u8 rv_b = wave_tables[wave_type_b][table_index_a];
 
-                u8 ov_b = (rv_b * amplitude_b) >> 7;
+            u8 ov_a = (rv_a * amplitude_a) >> 7;
 
-                dac_write_fast(CHB_CMD, ov_b);
+            u8 ov_b = (rv_b * amplitude_b) >> 7;
 
-                sw |= 0x40000000;
+            {
 
-            } else {
+                u16 tx_b = BUF_CMD | ((u16)ov_b << 4);
 
-                u8 rv_a = wave_tables[wave_type_a][table_index_a];
+                u16 tx_a = CHA_CMD | ((u16)ov_a << 4);
 
-                u8 ov_a = (rv_a * amplitude_a) >> 7;
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
 
-                dac_write_fast(CHA_CMD, ov_a);
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
 
-                sw &= ~0x40000000;
+                Xil_Out32(SPI_BASE + SPIDTR, tx_b);
 
-                table_index_a++;
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
 
-                if(table_index_a >= SAMPLES_PER_CYCLE) table_index_a = 0;
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
+
+                {
+
+                    volatile u32 _d;
+
+                    for(_d = 0; _d < 50; _d++);
+
+                }
+
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFE);
+
+                Xil_Out32(SPI_BASE + SPIDTR, tx_a);
+
+                while(!(Xil_In32(SPI_BASE + SPISR) & (1<<2)));
+
+                Xil_Out32(SPI_BASE + SPISSR, 0xFFFFFFFF);
 
             }
 
