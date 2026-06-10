@@ -84,6 +84,10 @@
 
 #define CHA_CMD     0xC000
 
+#define CHB_CMD     0x4000
+
+#define BUF_CMD     0x5000
+
 
 
 
@@ -243,10 +247,11 @@ volatile u8 table_index_a = 0;
 
 volatile u8 wave_type_a = WAVE_SINE;
 
+volatile u8 wave_type_b = WAVE_SINE;
 
-volatile u8 amplitude_a = 127;              // 最大幅值改�?27
+volatile u8 amplitude_a = 127;
 
-
+volatile u8 amplitude_b = 127;
 volatile u32 freq_hz_a = DEFAULT_FREQ_HZ;
 
 volatile u32 new_freq;
@@ -395,6 +400,8 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
     u8 func = (cmd_ch >> 4) & 0x0F;
 
+    u8 ch   = (cmd_ch >> 3) & 0x01;
+
     u32 freq;
 
     switch(func)
@@ -403,7 +410,11 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_WAVE:
 
-            wave_type_a = data[0]; table_index_a = 0;
+            if(ch == 0) wave_type_a = data[0];
+
+            else        wave_type_b = data[0];
+
+            table_index_a = 0;
 
             break;
 
@@ -419,7 +430,9 @@ void process_fixed_frame(u8 cmd_ch, u8* data)
 
         case FCMD_AMP:
 
-            amplitude_a = data[0];
+            if(ch == 0) amplitude_a = data[0];
+
+            else        amplitude_b = data[0];
 
             break;
 
